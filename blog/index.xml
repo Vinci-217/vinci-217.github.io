@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Blogs on Airplane Space</title><link>https://vinci-217.github.io/blog/</link><description>Recent content in Blogs on Airplane Space created by</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 21 Jan 2025 10:28:35 +0800</lastBuildDate><atom:link href="https://vinci-217.github.io/blog/index.xml" rel="self" type="application/rss+xml"/><item><title>深入理解分布式锁</title><link>https://vinci-217.github.io/blog/lock/</link><pubDate>Tue, 21 Jan 2025 10:28:35 +0800</pubDate><guid>https://vinci-217.github.io/blog/lock/</guid><description>&lt;p>分布式锁是一种常用的技术，在高并发场景下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Blogs on Airplane Space</title><link>https://vinci-217.github.io/blog/</link><description>Recent content in Blogs on Airplane Space created by</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 21 Jan 2025 10:28:35 +0800</lastBuildDate><atom:link href="https://vinci-217.github.io/blog/index.xml" rel="self" type="application/rss+xml"/><item><title>深入理解分布式锁的原理和技术选型</title><link>https://vinci-217.github.io/blog/lock/</link><pubDate>Tue, 21 Jan 2025 10:28:35 +0800</pubDate><guid>https://vinci-217.github.io/blog/lock/</guid><description>&lt;p>分布式锁是一种常用的技术，在高并发场景下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。&lt;/p>
 &lt;h2 id="分布式锁的特性">分布式锁的特性&lt;/h2>
 &lt;ul>
 &lt;li>互斥：不同线程之间互斥，只有一个线程能持有锁。&lt;/li>
@@ -70,7 +70,7 @@
 &lt;p>基于这两个机制，我们可以实现一个基于 Zookeeper 的分布式锁。&lt;/p>
 &lt;p>我们首先建立一个父节点，这个父节点是一个持久节点，用来表示共享资源。然后在父节点下创建临时顺序节点，这个临时顺序节点用来标识当前获得锁的线程。最终在父节点之下建立了一个类似于队列的结构。然后判断当前节点是不是最小的节点，如果是最小的节点，那么就获取锁，否则就监听前一个节点的删除事件，直到获得锁。每次节点使用完共享资源，就会删除该节点，进而释放锁，后面的节点通过 watch 监听前一个节点的删除事件，获得锁。&lt;/p>
 &lt;p>&lt;img src="pic/image.png" alt="alt text">&lt;/p>
-&lt;p>Zookeeper 实现分布式锁的好处就是可以实现顺序的公平锁。并且可以实现强一致性，所有的操作都可以被保证是原子性的。假如某个节点宕机了，那么会自动释放锁，防止了死锁，提高了系统的可用性。&lt;/p>
+&lt;p>Zookeeper 实现分布式锁的好处就是可以实现顺序的公平锁。并且可以实现较强一致性，所有的操作都可以被保证是原子性的。假如某个节点宕机了，那么会自动释放锁，防止了死锁，提高了系统的可用性。&lt;/p>
 &lt;p>但是坏处就是，节点的创建和销毁对性能开销比较大，在高并发的环境下可能有较大的性能问题。另外，Zookeeper 的 watch 机制也会增加系统的复杂度，需要考虑节点的删除和创建的时机，以及节点的连接状态等。&lt;/p>
 &lt;h3 id="redis">Redis&lt;/h3>
 &lt;p>用 Redis 实现分布式锁，利用的是 SETNX+EXPIRE 命令。&lt;/p>
@@ -101,14 +101,7 @@
 &lt;li>如果同一个线程再次请求获取同一个锁，Redisson 会检测到该线程已经持有锁，因为 Redis 中的值包含该线程的唯一标识符。此时，Redisson 只会增加计数器，而不会再次申请锁。&lt;/li>
 &lt;li>当线程释放锁时，Redisson 会减少计数器。只有当计数器减少到 0 时，锁才会真正被释放，Redis 中的键才会被删除。&lt;/li>
 &lt;/ol>
-&lt;h2 id="分布式锁的使用场景">分布式锁的使用场景&lt;/h2>
-&lt;p>分布式锁的核心目的是保证共享资源的独占。其使用场景有如下：&lt;/p>
-&lt;ol>
-&lt;li>多个应用实例需要同时修改同一份数据，需要保证数据的一致性。例如：秒杀抢购、优惠券领取等。&lt;/li>
-&lt;li>系统需要进行任务调度，任务之间需要互斥执行。例如：定时任务等。&lt;/li>
-&lt;li>避免重复处理数据。例如：调度任务在多台机器重复执行，缓存过期所有请求都去加载数据库。&lt;/li>
-&lt;li>保证数据的正确性。例如：秒杀的时候防止商品超卖，表单重复提交，接口幂等性。&lt;/li>
-&lt;/ol>
+&lt;h2 id="分布式锁的选用">分布式锁的选用&lt;/h2>
 &lt;h3 id="参考文献">参考文献&lt;/h3>
 &lt;p>&lt;a href="https://blog.csdn.net/u013474436/article/details/104924782">基于 MySQL 实现的分布式锁&lt;/a>&lt;/p>
 &lt;p>&lt;a href="https://blog.csdn.net/weixin_45683778/article/details/144564485">【MySQL】优雅的使用 MySQL 实现分布式锁&lt;/a>&lt;/p>
