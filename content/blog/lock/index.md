@@ -5,6 +5,7 @@ tags: ["redis", "zookeeper", "分布式锁", "redisson"]
 series: []
 featured: true
 ---
+
 分布式锁是一种常用的技术，在高并发场景下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。
 
 <!--more-->
@@ -147,6 +148,8 @@ Redisson 的看门狗机制目的是检查锁的状态，自动管理分布式�
 
 ![alt text](image/image-1.png)
 
+Redisson 通过 RedLock 算法，保证了集群环境中锁的可靠性。
+
 RedLock 算法的主要目的是为了解决 Master 节点宕机导致锁的释放问题。RedLock 算法的基本思路是，在多个 Redis 节点上同时加锁，只要大多数 Redis 节点都加锁成功，那么加锁成功；如果加锁失败，则释放所有锁并重试。
 
 RedLock 算法的流程如下：
@@ -157,7 +160,11 @@ RedLock 算法的流程如下：
 
 ![alt text](image/image-2.png)
 
-Redisson 通过 RedLock 算法，保证了集群环境中锁的可靠性。
+Redisson 通过唯一标识与计数器实现了锁的可重入的特性：
+
+1. 每个锁在 Redis 中存储为一个键，键的值是一个唯一标识符（通常是 UUID）和一个计数器。当一个线程第一次获取锁时，Redisson 会在 Redis 中创建一个键，值为当前线程的唯一标识符，并将计数器设置为 1。
+2. 如果同一个线程再次请求获取同一个锁，Redisson 会检测到该线程已经持有锁，因为 Redis 中的值包含该线程的唯一标识符。此时，Redisson 只会增加计数器，而不会再次申请锁。
+3. 当线程释放锁时，Redisson 会减少计数器。只有当计数器减少到 0 时，锁才会真正被释放，Redis 中的键才会被删除。
 
 ## 分布式锁的使用场景
 
