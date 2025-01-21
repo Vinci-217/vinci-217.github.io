@@ -2,30 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://localhost:1313/</loc>
+    <loc>https://vinci-217.github.io/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/blog/</loc>
+    <loc>https://vinci-217.github.io/blog/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/redis/</loc>
+    <loc>https://vinci-217.github.io/tags/redis/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/redisson/</loc>
+    <loc>https://vinci-217.github.io/tags/redisson/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/</loc>
+    <loc>https://vinci-217.github.io/tags/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/zookeeper/</loc>
+    <loc>https://vinci-217.github.io/tags/zookeeper/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/</loc>
+    <loc>https://vinci-217.github.io/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/blog/lock/</loc>
+    <loc>https://vinci-217.github.io/blog/lock/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/series/</loc>
+    <loc>https://vinci-217.github.io/series/</loc>
   </url>
 </urlset>
