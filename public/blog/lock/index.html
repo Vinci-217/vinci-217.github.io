@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh"><head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深入理解分布式锁</title>
+    <meta charset="utf-8">
+    <meta name="description" content="Ladder@分布式锁是一种常用的技术，在高并发场景下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。">
+    <meta name="author" content="Airplane">
+    <link rel="canonical" href="http://localhost:1313/blog/lock/">
+
+    <link rel="alternate" type="application/rss+xml" href="http://localhost:1313//index.xml" title="Airplane Space">
+
+    
+
+
+    <meta property="og:url" content="http://localhost:1313/blog/lock/">
+  <meta property="og:site_name" content="Airplane Space">
+  <meta property="og:title" content="深入理解分布式锁">
+  <meta property="og:description" content="分布式锁是一种常用的技术，在高并发场景下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="blog">
+    <meta property="article:published_time" content="2025-01-21T10:28:35+08:00">
+    <meta property="article:modified_time" content="2025-01-21T10:28:35+08:00">
+    <meta property="article:tag" content="Redis">
+    <meta property="article:tag" content="Zookeeper">
+    <meta property="article:tag" content="分布式锁">
+    <meta property="article:tag" content="Redisson">
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="深入理解分布式锁">
+  <meta name="twitter:description" content="分布式锁是一种常用的技术，在高并发场景下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。">
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Blogs",
+      "item": "http://localhost:1313/blog/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "深入理解分布式锁",
+      "item": "http://localhost:1313/blog/lock/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "深入理解分布式锁",
+  "name": "深入理解分布式锁",
+  "description": "分布式锁是一种常用的技术，在高并发场景下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。\n",
+  "keywords": [
+    "redis", "zookeeper", "分布式锁", "redisson"
+  ],
+  "articleBody": "分布式锁是一种常用的技术，在高并发场景下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。\n分布式锁的特性 互斥：不同线程之间互斥，只有一个线程能持有锁。 超时机制：代码耗时过长，网络原因等，导致锁一直被占用，造成死锁，所以引入超时机制，超过指定时间自动释放锁。 完备的锁接口：阻塞的和非阻塞的接口都要有，lock 和 tryLock。 可重入性：当前请求的节点 + 线程唯一标识，可以再次获取同一把锁 公平性：锁唤醒时候，按照顺序唤醒，不公平的话，有可能出现饥饿现象。 分布式锁的原理与实现 分布式锁的目的是区别于 JVM 单机锁。\nJVM 单机锁就是在同一个 JVM 中的锁。比如你使用了 synchronized 关键字，那么就是在这同一个 JVM 中，同一时刻只能有一个线程持有锁，其他线程只能等待。但是当你的后端服务式多个机器的集群部署方式，那么 JVM 单机锁就无法满足需求了。因为你这个 JVM 锁住了，我的线程打到了另一台机器上，那就相当于没锁住，所以我们需要分布式锁。分布式锁的目的就是在多个 JVM 层之前设置的锁，这样就可以在多个机器上实现同一把锁的目的。\n分布式锁的原理就是在多个机器上设置同一把锁，这个锁通常通过某些中间件实现。当一个线程想要获取锁的时候，首先会去尝试获取锁，如果获取成功，那么就可以执行任务，如果获取失败，那么就只能等待，直到锁被释放。\nMySQL 基于索引 基于索引的实现，是通过在数据库的某个字段上加了唯一的索引，那么只有一个线程能够对写入同一个数据，其他的线程由于索引的唯一性而无法写入，只能等待资源释放——这个唯一值被 DELETE 掉，那么可以重新写入来获取锁\n我们可以先创建一个类似的表：\nCREATE TABLE `database_lock` ( `id` BIGINT NOT NULL AUTO_INCREMENT, `resource` int NOT NULL COMMENT '锁定的资源', `description` varchar(1024) NOT NULL DEFAULT \"\" COMMENT '描述', PRIMARY KEY (`id`), UNIQUE KEY `uiq_idx_resource` (`resource`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='数据库分布式锁表'; 其中的 resource 就是锁的名字，locked_at 就是锁的创建时间。\n这里我们给数据库加了一个唯一索引，目的是对资源进唯一性约束。这样在写入同一个数据时，只能有一个线程写入，其他线程只能失败。通过这样的方法就实现了一个分布式锁。\n这种锁的实现比较简单，但也会面临锁无法过期，锁的可靠性依赖于 MySQL 数据库的可用性等等问题。\n基于乐观锁 基于乐观锁的实现原理是多个线程可以同时对资源进行修改，但最终只能有一个修改成功，其他的回退。乐观锁的实现一般是基于版本号的机制，比如在更新数据时，先获取当前版本号，然后更新数据，再更新版本号。如果更新失败，说明数据已经被其他线程更新过了，那么就需要重试。\n例如建立如下的数据库表：\nCREATE TABLE `optimistic_lock` ( `id` BIGINT NOT NULL AUTO_INCREMENT, `resource` int NOT NULL COMMENT '锁定的资源', `version` int NOT NULL COMMENT '版本信息', `created_at` datetime COMMENT '创建时间', `updated_at` datetime COMMENT '更新时间', `deleted_at` datetime COMMENT '删除时间', PRIMARY KEY (`id`), UNIQUE KEY `uiq_idx_resource` (`resource`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='数据库分布式锁表'; 每个线程的执行逻辑如下：\n获取资源： SELECT resource, version FROM optimistic_lock WHERE id = 1 执行业务逻辑 更新资源：UPDATE optimistic_lock SET resource = resource -1, version = version + 1 WHERE id = 1 AND version = oldVersion 通过比对修改后的 version 和修改之前的 oldVersion，如果一致，说明数据没有被其他线程更新过，那么就更新成功，否则就需要重试。\n这种锁的实现比较复杂，但也能保证数据的一致性。在检测数据冲突时并不依赖数据库本身的锁机制，不会影响请求的性能。但是需要对表的设计增加额外的字段，增加了数据库的冗余。并且高并发的情况下增加了重试的次数，会影响性能。\n基于悲观锁 基于悲观锁的实现原理是多个线程只能一个一个地获取锁，直到获取锁的线程释放锁，其他线程才能获取锁。我们在基于 MySQL 的悲观锁的实现中，一般采用 MySQL 自带的锁机制，比如 SELECT … FOR UPDATE。数据库会在查询的过程中加上排他锁，那么这样别的事务就无法对该资源进行修改。\n基于悲观锁的实现过程如下：\n获取资源： SELECT * FROM optimistic_lock WHERE id = 1 FOR UPDATE 执行业务逻辑 释放资源：COMMIT 相当于我们基于 SELECT … FOR UPDATE 获取了这行数据的锁，并且在同一事务下执行修改的业务逻辑，最终在 COMMIT 提交事务时释放锁。\n这种锁的的实现也比较简单，主要是基于数据库的事务和行锁。但要注意行锁失效的情况。并且每次请求都会额外产生加锁的开销且未获取到锁的请求将会阻塞等待锁的获取，在高并发环境下，容易造成大量请求阻塞，影响系统可用性。\nZookeeper 基于 Zookeeper 的分布式锁，主要来自于 Zookeeper 的两个机制\n临时顺序节点机制 Zookeeper 的节点是一个类似于文件系统的目录结构，每个节点都可以设置临时顺序节点，也就是说，在创建节点时，可以指定一个顺序，然后 Zookeeper 会根据这个顺序来分配节点的唯一标识符。除此以外节点也可以被标记为持久节点，持久节点会一直存在直到主动删除。\nwatch 机制 Zookeeper 的 watch 机制允许用户在指定的节点上注册一个监听器，当节点发生变化时，Zookeeper 会通知监听器，并触发监听器的回调函数。\n基于这两个机制，我们可以实现一个基于 Zookeeper 的分布式锁。\n我们首先建立一个父节点，这个父节点是一个持久节点，用来表示共享资源。然后在父节点下创建临时顺序节点，这个临时顺序节点用来标识当前获得锁的线程。最终在父节点之下建立了一个类似于队列的结构。然后判断当前节点是不是最小的节点，如果是最小的节点，那么就获取锁，否则就监听前一个节点的删除事件，直到获得锁。每次节点使用完共享资源，就会删除该节点，进而释放锁，后面的节点通过 watch 监听前一个节点的删除事件，获得锁。\nZookeeper 实现分布式锁的好处就是可以实现顺序的公平锁。并且可以实现强一致性，所有的操作都可以被保证是原子性的。假如某个节点宕机了，那么会自动释放锁，防止了死锁，提高了系统的可用性。\n但是坏处就是，节点的创建和销毁对性能开销比较大，在高并发的环境下可能有较大的性能问题。另外，Zookeeper 的 watch 机制也会增加系统的复杂度，需要考虑节点的删除和创建的时机，以及节点的连接状态等。\nRedis 用 Redis 实现分布式锁，利用的是 SETNX+EXPIRE 命令。\nSETNX 命令的作用是设置一个 key，当 key 不存在时，返回 1，如果 key 已经存在，返回 0。EXPIRE 命令的作用是设置一个 key 的过期时间，当 key 过期时，Redis 会自动删除该 key。\n一般这两条命令写在一行来确保指令的原子性，如：\nSETNX lock_key some_unique_value EXPIRE lock_key 10 # 设置过期时间为10秒 其中 lock_key 是锁的名字，some_unique_value 是唯一的值，10 是过期时间。\n当两个线程同时执行这个命令时，只有一个线程会成功对 lock_key 的值进行修改，其他线程会失败，这样就达到了分布式锁的目的。\n基于 Redis 实现分布式锁，由于是对值的修改，性能比较高。但是如果是在 Redis 集群环境下，由于 Redis 集群同步是异步的。如果在 Master 节点上设置锁，Slave 节点可能没有同步到最新的数据。此时 Master 节点崩溃了但是理论上锁不应当被释放，但由于 Master 的宕机导致了锁物理上被释放，所以其他客户端可能会加新的锁来对共享资源进行修改，这样就出现了问题。\n解决这个问题的方法就是 RedLock 算法——也就是 Redisson 的实现原理。\nRedisson Redisson 的特性有：看门狗机制、集群支持、公平锁等等\nRedisson 的公平锁的实现原理类似于 ReentrankLock 的公平锁机制，主要维护一个等待队列，通过控制锁的获取顺序来实现。\nRedisson 的看门狗机制目的是检查锁的状态，自动管理分布式锁过期时间。其实现主要通过一个后台线程（俗称看门狗），每隔锁的 1/3 时间检查锁的状态，只要持有锁的线程仍在执行且没有主动释放锁，看门狗就会持续进行续期操作。如果没有线程持有锁，看门狗就会自动释放锁。\nRedLock 算法的主要目的是为了解决 Master 节点宕机导致锁的释放问题。RedLock 算法的基本思路是，在多个 Redis 节点上同时加锁，只要大多数 Redis 节点都加锁成功，那么加锁成功；如果加锁失败，则释放所有锁并重试。\nRedLock 算法的流程如下：\n客户端获取当前时间戳。 客户端在每个 Redis 节点上尝试用相同的锁名和 UUID 获取锁，并设置一个较短的过期时间。获取成功则记录加锁节点，否则记录失败节点。并记录加锁的总用时。 如果成功加锁的节点大于等于 N/2+1（N 为 Redis 节点数），并且获取锁的总时间小于锁的过期时间，则认为加锁成功并执行业务逻辑；否则认为获取锁失败，释放所有锁 Redisson 通过 RedLock 算法，保证了集群环境中锁的可靠性。\n分布式锁的使用场景 分布式锁的核心目的是保证共享资源的独占。其使用场景有如下：\n多个应用实例需要同时修改同一份数据，需要保证数据的一致性。例如：秒杀抢购、优惠券领取等。 系统需要进行任务调度，任务之间需要互斥执行。例如：定时任务等。 避免重复处理数据。例如：调度任务在多台机器重复执行，缓存过期所有请求都去加载数据库。 保证数据的正确性。例如：秒杀的时候防止商品超卖，表单重复提交，接口幂等性。 参考文献 基于 MySQL 实现的分布式锁\n【MySQL】优雅的使用 MySQL 实现分布式锁\nZookeeper 实现分布式锁（Zk 分布式锁）\n阿里技术-分布式锁实现原理与最佳实践\n",
+  "wordCount" : "341",
+  "inLanguage": "zh",
+  "datePublished": "2025-01-21T10:28:35+08:00",
+  "dateModified": "2025-01-21T10:28:35+08:00",
+  "author":{
+    "@type": "Person",
+    "name": "Airplane"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/blog/lock/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Airplane Space",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
+</script>
+    <link rel="icon" href="/images/airplane.jpg" sizes="16x16">
+
+<link rel="apple-touch-icon" href="/images/airplane.jpg">
+
+<link rel="manifest" href="/images/airplane.jpg">
+    
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css" />
+
+    
+    
+    <link rel="stylesheet" href="/css/main.min.ec28f09e946fc0df77c187fcd0d0ebde58fca6de8efb8e1620f3d45c32d4da88.css" integrity="sha256-7CjwnpRvwN93wYf80NDr3lj8pt6O&#43;44WIPPUXDLU2og=" crossorigin="anonymous" media="screen" />
+
+    
+    <link rel="stylesheet" href="/scss/highlight/github-dark.min.min.66034289ee9a113219a2c4aae0a8bd2095ab255c832a42efcf5863f10814e7a1.css" />
+
+    
+    <script src="/js/highlight.min.min.c607d6febd16934a82eb61d3a896ed9d869f54373cc63ce95864ed5488fe3128.js"></script>
+    <script>hljs.highlightAll();</script>
+
+    </head>
+<body>
+      <main class="wrapper"><nav class="navigation">
+    <section class="container">
+        <a class="navigation-brand" href="/">
+            主页
+        </a>
+        <input type="checkbox" id="menu-toggle" />
+        <label class="menu-button float-right" for="menu-toggle">
+            <span></span><span></span><span></span>
+        </label>
+        
+        <ul class="navigation-list" id="navigation-list">
+            
+            
+            <li class="navigation-item navigation-menu">
+                <a class="navigation-link" href="/blog/">文章</a>
+            </li>
+            
+            <li class="navigation-item navigation-menu">
+                <a class="navigation-link" href="/archive/">归档</a>
+            </li>
+            
+            <li class="navigation-item navigation-menu">
+                <a class="navigation-link" href="/contact/">联系</a>
+            </li>
+            
+            
+
+            <li class="navigation-item menu-separator">
+                <span>|</span>
+            </li>
+
+            
+
+            
+        </ul>
+        
+    </section>
+</nav>
+<div id="content">
+<article class="blog-single">
+  <header class="blog-title">
+    <h1>深入理解分布式锁</h1>
+  </header>
+
+  <p>
+  <small>
+    2025年1月21日&nbsp;· 341 字&nbsp;· 2 分钟</small>
+
+  
+<p>
+
+  <div class="blog-toc">
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#分布式锁的特性">分布式锁的特性</a></li>
+    <li><a href="#分布式锁的原理与实现">分布式锁的原理与实现</a>
+      <ul>
+        <li><a href="#mysql">MySQL</a></li>
+        <li><a href="#zookeeper">Zookeeper</a></li>
+        <li><a href="#redis">Redis</a></li>
+        <li><a href="#redisson">Redisson</a></li>
+      </ul>
+    </li>
+    <li><a href="#分布式锁的使用场景">分布式锁的使用场景</a>
+      <ul>
+        <li><a href="#参考文献">参考文献</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+
+  <section class="blog-content"><p>分布式锁是一种常用的技术，在高并发场景下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。</p>
+<h2 id="分布式锁的特性">分布式锁的特性</h2>
+<ul>
+<li>互斥：不同线程之间互斥，只有一个线程能持有锁。</li>
+<li>超时机制：代码耗时过长，网络原因等，导致锁一直被占用，造成死锁，所以引入超时机制，超过指定时间自动释放锁。</li>
+<li>完备的锁接口：阻塞的和非阻塞的接口都要有，lock 和 tryLock。</li>
+<li>可重入性：当前请求的节点 + 线程唯一标识，可以再次获取同一把锁</li>
+<li>公平性：锁唤醒时候，按照顺序唤醒，不公平的话，有可能出现饥饿现象。</li>
+</ul>
+<h2 id="分布式锁的原理与实现">分布式锁的原理与实现</h2>
+<p>分布式锁的目的是区别于 JVM 单机锁。</p>
+<p>JVM 单机锁就是在同一个 JVM 中的锁。比如你使用了 synchronized 关键字，那么就是在这同一个 JVM 中，同一时刻只能有一个线程持有锁，其他线程只能等待。但是当你的后端服务式多个机器的集群部署方式，那么 JVM 单机锁就无法满足需求了。因为你这个 JVM 锁住了，我的线程打到了另一台机器上，那就相当于没锁住，所以我们需要分布式锁。分布式锁的目的就是在多个 JVM 层之前设置的锁，这样就可以在多个机器上实现同一把锁的目的。</p>
+<p><img src="image/distrubuted-lock/1734618456781.png" alt="1734618456781"></p>
+<p>分布式锁的原理就是在多个机器上设置同一把锁，这个锁通常通过某些中间件实现。当一个线程想要获取锁的时候，首先会去尝试获取锁，如果获取成功，那么就可以执行任务，如果获取失败，那么就只能等待，直到锁被释放。</p>
+<h3 id="mysql">MySQL</h3>
+<h4 id="基于索引">基于索引</h4>
+<p>基于索引的实现，是通过在数据库的某个字段上加了唯一的索引，那么只有一个线程能够对写入同一个数据，其他的线程由于索引的唯一性而无法写入，只能等待资源释放——这个唯一值被 DELETE 掉，那么可以重新写入来获取锁</p>
+<p>我们可以先创建一个类似的表：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">TABLE</span> <span style="color:#f92672">`</span>database_lock<span style="color:#f92672">`</span> (
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">`</span>id<span style="color:#f92672">`</span> BIGINT <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> AUTO_INCREMENT,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">`</span>resource<span style="color:#f92672">`</span> int <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;锁定的资源&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">`</span>description<span style="color:#f92672">`</span> varchar(<span style="color:#ae81ff">1024</span>) <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> <span style="color:#66d9ef">DEFAULT</span> <span style="color:#e6db74">&#34;&#34;</span> <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;描述&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">PRIMARY</span> <span style="color:#66d9ef">KEY</span> (<span style="color:#f92672">`</span>id<span style="color:#f92672">`</span>),
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">UNIQUE</span> <span style="color:#66d9ef">KEY</span> <span style="color:#f92672">`</span>uiq_idx_resource<span style="color:#f92672">`</span> (<span style="color:#f92672">`</span>resource<span style="color:#f92672">`</span>)
+</span></span><span style="display:flex;"><span>) ENGINE<span style="color:#f92672">=</span>InnoDB <span style="color:#66d9ef">DEFAULT</span> CHARSET<span style="color:#f92672">=</span>utf8mb4 <span style="color:#66d9ef">COMMENT</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#39;数据库分布式锁表&#39;</span>;
+</span></span></code></pre></div><p>其中的 resource 就是锁的名字，locked_at 就是锁的创建时间。</p>
+<p>这里我们给数据库加了一个唯一索引，目的是对资源进唯一性约束。这样在写入同一个数据时，只能有一个线程写入，其他线程只能失败。通过这样的方法就实现了一个分布式锁。</p>
+<p>这种锁的实现比较简单，但也会面临锁无法过期，锁的可靠性依赖于 MySQL 数据库的可用性等等问题。</p>
+<h4 id="基于乐观锁">基于乐观锁</h4>
+<p>基于乐观锁的实现原理是多个线程可以同时对资源进行修改，但最终只能有一个修改成功，其他的回退。乐观锁的实现一般是基于版本号的机制，比如在更新数据时，先获取当前版本号，然后更新数据，再更新版本号。如果更新失败，说明数据已经被其他线程更新过了，那么就需要重试。</p>
+<p>例如建立如下的数据库表：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">TABLE</span> <span style="color:#f92672">`</span>optimistic_lock<span style="color:#f92672">`</span> (
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">`</span>id<span style="color:#f92672">`</span> BIGINT <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> AUTO_INCREMENT,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">`</span>resource<span style="color:#f92672">`</span> int <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;锁定的资源&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">`</span><span style="color:#66d9ef">version</span><span style="color:#f92672">`</span> int <span style="color:#66d9ef">NOT</span> <span style="color:#66d9ef">NULL</span> <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;版本信息&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">`</span>created_at<span style="color:#f92672">`</span> datetime <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;创建时间&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">`</span>updated_at<span style="color:#f92672">`</span> datetime <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;更新时间&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#f92672">`</span>deleted_at<span style="color:#f92672">`</span> datetime <span style="color:#66d9ef">COMMENT</span> <span style="color:#e6db74">&#39;删除时间&#39;</span>,
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">PRIMARY</span> <span style="color:#66d9ef">KEY</span> (<span style="color:#f92672">`</span>id<span style="color:#f92672">`</span>),
+</span></span><span style="display:flex;"><span> <span style="color:#66d9ef">UNIQUE</span> <span style="color:#66d9ef">KEY</span> <span style="color:#f92672">`</span>uiq_idx_resource<span style="color:#f92672">`</span> (<span style="color:#f92672">`</span>resource<span style="color:#f92672">`</span>)
+</span></span><span style="display:flex;"><span>) ENGINE<span style="color:#f92672">=</span>InnoDB <span style="color:#66d9ef">DEFAULT</span> CHARSET<span style="color:#f92672">=</span>utf8mb4 <span style="color:#66d9ef">COMMENT</span><span style="color:#f92672">=</span><span style="color:#e6db74">&#39;数据库分布式锁表&#39;</span>;
+</span></span></code></pre></div><p>每个线程的执行逻辑如下：</p>
+<ul>
+<li>获取资源： SELECT resource, version FROM optimistic_lock WHERE id = 1</li>
+<li>执行业务逻辑</li>
+<li>更新资源：UPDATE optimistic_lock SET resource = resource -1, version = version + 1 WHERE id = 1 AND version = oldVersion</li>
+</ul>
+<p>通过比对修改后的 version 和修改之前的 oldVersion，如果一致，说明数据没有被其他线程更新过，那么就更新成功，否则就需要重试。</p>
+<p>这种锁的实现比较复杂，但也能保证数据的一致性。在检测数据冲突时并不依赖数据库本身的锁机制，不会影响请求的性能。但是需要对表的设计增加额外的字段，增加了数据库的冗余。并且高并发的情况下增加了重试的次数，会影响性能。</p>
+<h4 id="基于悲观锁">基于悲观锁</h4>
+<p>基于悲观锁的实现原理是多个线程只能一个一个地获取锁，直到获取锁的线程释放锁，其他线程才能获取锁。我们在基于 MySQL 的悲观锁的实现中，一般采用 MySQL 自带的锁机制，比如 SELECT &hellip; FOR UPDATE。数据库会在查询的过程中加上排他锁，那么这样别的事务就无法对该资源进行修改。</p>
+<p>基于悲观锁的实现过程如下：</p>
+<ul>
+<li>获取资源： SELECT * FROM optimistic_lock WHERE id = 1 FOR UPDATE</li>
+<li>执行业务逻辑</li>
+<li>释放资源：COMMIT</li>
+</ul>
+<p>相当于我们基于 SELECT &hellip; FOR UPDATE 获取了这行数据的锁，并且在同一事务下执行修改的业务逻辑，最终在 COMMIT 提交事务时释放锁。</p>
+<p>这种锁的的实现也比较简单，主要是基于数据库的事务和行锁。但要注意行锁失效的情况。并且每次请求都会额外产生加锁的开销且未获取到锁的请求将会阻塞等待锁的获取，在高并发环境下，容易造成大量请求阻塞，影响系统可用性。</p>
+<h3 id="zookeeper">Zookeeper</h3>
+<p>基于 Zookeeper 的分布式锁，主要来自于 Zookeeper 的两个机制</p>
+<ul>
+<li>临时顺序节点机制</li>
+</ul>
+<p>Zookeeper 的节点是一个类似于文件系统的目录结构，每个节点都可以设置临时顺序节点，也就是说，在创建节点时，可以指定一个顺序，然后 Zookeeper 会根据这个顺序来分配节点的唯一标识符。除此以外节点也可以被标记为持久节点，持久节点会一直存在直到主动删除。</p>
+<ul>
+<li>watch 机制</li>
+</ul>
+<p>Zookeeper 的 watch 机制允许用户在指定的节点上注册一个监听器，当节点发生变化时，Zookeeper 会通知监听器，并触发监听器的回调函数。</p>
+<p>基于这两个机制，我们可以实现一个基于 Zookeeper 的分布式锁。</p>
+<p>我们首先建立一个父节点，这个父节点是一个持久节点，用来表示共享资源。然后在父节点下创建临时顺序节点，这个临时顺序节点用来标识当前获得锁的线程。最终在父节点之下建立了一个类似于队列的结构。然后判断当前节点是不是最小的节点，如果是最小的节点，那么就获取锁，否则就监听前一个节点的删除事件，直到获得锁。每次节点使用完共享资源，就会删除该节点，进而释放锁，后面的节点通过 watch 监听前一个节点的删除事件，获得锁。</p>
+<p><img src="image/distrubuted-lock/1734620690387.png" alt="1734620690387"></p>
+<p>Zookeeper 实现分布式锁的好处就是可以实现顺序的公平锁。并且可以实现强一致性，所有的操作都可以被保证是原子性的。假如某个节点宕机了，那么会自动释放锁，防止了死锁，提高了系统的可用性。</p>
+<p>但是坏处就是，节点的创建和销毁对性能开销比较大，在高并发的环境下可能有较大的性能问题。另外，Zookeeper 的 watch 机制也会增加系统的复杂度，需要考虑节点的删除和创建的时机，以及节点的连接状态等。</p>
+<h3 id="redis">Redis</h3>
+<p>用 Redis 实现分布式锁，利用的是 SETNX+EXPIRE 命令。</p>
+<p>SETNX 命令的作用是设置一个 key，当 key 不存在时，返回 1，如果 key 已经存在，返回 0。EXPIRE 命令的作用是设置一个 key 的过期时间，当 key 过期时，Redis 会自动删除该 key。</p>
+<p>一般这两条命令写在一行来确保指令的原子性，如：</p>
+<pre tabindex="0"><code class="language-redis" data-lang="redis">SETNX lock_key some_unique_value EXPIRE lock_key 10  # 设置过期时间为10秒
+</code></pre><p>其中 lock_key 是锁的名字，some_unique_value 是唯一的值，10 是过期时间。</p>
+<p>当两个线程同时执行这个命令时，只有一个线程会成功对 lock_key 的值进行修改，其他线程会失败，这样就达到了分布式锁的目的。</p>
+<p>基于 Redis 实现分布式锁，由于是对值的修改，性能比较高。但是如果是在 Redis 集群环境下，由于 Redis 集群同步是异步的。如果在 Master 节点上设置锁，Slave 节点可能没有同步到最新的数据。此时 Master 节点崩溃了但是理论上锁不应当被释放，但由于 Master 的宕机导致了锁物理上被释放，所以其他客户端可能会加新的锁来对共享资源进行修改，这样就出现了问题。</p>
+<p>解决这个问题的方法就是 RedLock 算法——也就是 Redisson 的实现原理。</p>
+<h3 id="redisson">Redisson</h3>
+<p>Redisson 的特性有：看门狗机制、集群支持、公平锁等等</p>
+<p>Redisson 的公平锁的实现原理类似于 ReentrankLock 的公平锁机制，主要维护一个等待队列，通过控制锁的获取顺序来实现。</p>
+<p>Redisson 的看门狗机制目的是检查锁的状态，自动管理分布式锁过期时间。其实现主要通过一个后台线程（俗称看门狗），每隔锁的 1/3 时间检查锁的状态，只要持有锁的线程仍在执行且没有主动释放锁，看门狗就会持续进行续期操作。如果没有线程持有锁，看门狗就会自动释放锁。</p>
+<p><img src="image/distrubuted-lock/1734689205776.png" alt="1734689205776"></p>
+<p>RedLock 算法的主要目的是为了解决 Master 节点宕机导致锁的释放问题。RedLock 算法的基本思路是，在多个 Redis 节点上同时加锁，只要大多数 Redis 节点都加锁成功，那么加锁成功；如果加锁失败，则释放所有锁并重试。</p>
+<p>RedLock 算法的流程如下：</p>
+<ol>
+<li>客户端获取当前时间戳。</li>
+<li>客户端在每个 Redis 节点上尝试用相同的锁名和 UUID 获取锁，并设置一个较短的过期时间。获取成功则记录加锁节点，否则记录失败节点。并记录加锁的总用时。</li>
+<li>如果成功加锁的节点大于等于 N/2+1（N 为 Redis 节点数），并且获取锁的总时间小于锁的过期时间，则认为加锁成功并执行业务逻辑；否则认为获取锁失败，释放所有锁</li>
+</ol>
+<p><img src="image/distrubuted-lock/1734689465848.png" alt="1734689465848"></p>
+<p>Redisson 通过 RedLock 算法，保证了集群环境中锁的可靠性。</p>
+<h2 id="分布式锁的使用场景">分布式锁的使用场景</h2>
+<p>分布式锁的核心目的是保证共享资源的独占。其使用场景有如下：</p>
+<ol>
+<li>多个应用实例需要同时修改同一份数据，需要保证数据的一致性。例如：秒杀抢购、优惠券领取等。</li>
+<li>系统需要进行任务调度，任务之间需要互斥执行。例如：定时任务等。</li>
+<li>避免重复处理数据。例如：调度任务在多台机器重复执行，缓存过期所有请求都去加载数据库。</li>
+<li>保证数据的正确性。例如：秒杀的时候防止商品超卖，表单重复提交，接口幂等性。</li>
+</ol>
+<h3 id="参考文献">参考文献</h3>
+<p><a href="https://blog.csdn.net/u013474436/article/details/104924782">基于 MySQL 实现的分布式锁</a></p>
+<p><a href="https://blog.csdn.net/weixin_45683778/article/details/144564485">【MySQL】优雅的使用 MySQL 实现分布式锁</a></p>
+<p><a href="https://blog.csdn.net/Fireworkit/article/details/136968331">Zookeeper 实现分布式锁（Zk 分布式锁）</a></p>
+<p><a href="https://mp.weixin.qq.com/s/hvTx6_WSZ82ok3na7L1IiA">阿里技术-分布式锁实现原理与最佳实践</a></p></section>
+
+  
+  
+
+  
+
+
+  
+  
+</article>
+
+
+        </div><footer class="footer">
+  <p>&copy; 2025 <a href="http://localhost:1313/">Airplane Space</a>
+    Powered by
+    <a href="https://gohugo.io/" rel="noopener" target="_blank">Hugo️️</a>
+    <a href="https://github.com/guangzhengli/hugo-theme-ladder" rel="noopener" target="_blank">Ladder</a>
+️  </p>
+</footer>
+
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10.5376 22.7916C11.0152 22.7207 22.5795 21.1781 22.0978 10.4211C22.0536 9.43274 21.9303 8.53367 21.7387 7.71865M10.5376 22.7916C16.876 22.3728 20.0969 19.8899 21.5383 16.9142M10.5376 22.7916C9.7707 22.9055 8.97982 22.8964 8.19743 22.7725M21.7387 7.71865C21.4988 6.69828 21.1518 5.80967 20.7188 5.04257M21.7387 7.71865C22.6022 10.1105 23.0542 13.7848 21.5383 16.9142M20.7188 5.04257C17.1684 -1.24629 7.83127 0.632493 4.27577 5.04257C2.88063 6.77451 -0.0433281 11.1668 1.38159 16.6571C2.27481 20.0988 5.17269 22.2936 8.19743 22.7725M20.7188 5.04257C22.0697 6.9404 24.0299 11.3848 22.3541 15.4153M21.5383 16.9142C21.8737 16.4251 22.1428 15.9235 22.3541 15.4153M8.19743 22.7725C12.1971 23.4683 20.6281 22.971 22.3541 15.4153M14 10.945C13.3836 10.289 12.003 8.63215 11.2034 7.04814C11.1703 6.98257 11.0247 6.98456 10.9937 7.05061C10.5221 8.05496 9.07362 9.92941 8 10.945M11.0333 7.44444C10.9392 9.86549 11 15 12 17" stroke="currentColor" stroke-linecap="round"/>
+    </svg>
+</a>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+</script>
+
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'Copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'Copied';
+            setTimeout(() => {
+                copybutton.innerHTML = 'Copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+        codeblock.parentNode.appendChild(copybutton);
+    });
+</script></main>
+    </body><script src="/main.min.cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e.js" integrity="sha512-z4PhNX7vuL3xVChQ1m2AB9Yg5AULVxXcg/SpIdNs6c5H0NE8XYXysP&#43;DGNKHfuwvY7kxvUdBeoGlODJ6&#43;SfaPg==" crossorigin="anonymous" defer></script></html>
