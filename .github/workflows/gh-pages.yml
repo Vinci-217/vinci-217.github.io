@@ -25,11 +25,10 @@ jobs:
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
-        # If you're changing the branch from main, 
-        # also change the `main` in `refs/heads/main`
+        # If you're changing the branch from main,
+        # also change the `main` in `refs/heads/main` 
         # below accordingly.
         if: github.ref == 'refs/heads/main'
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PUBLISH_DIR: ./public
-          EXTERNAL_REPOSITORY: vinci-217
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
