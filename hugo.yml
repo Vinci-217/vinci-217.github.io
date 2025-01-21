@@ -3,8 +3,6 @@ languageCode: en-us
 title: Airplane Space
 theme: hugo-theme-ladder
 defaultContentLanguage: zh
-license: MIT
-licenselink: 'https://github.com/guangzhengli/hugo-theme-ladder/blob/master/LICENSE'
 
 params:
   brand: 主页
