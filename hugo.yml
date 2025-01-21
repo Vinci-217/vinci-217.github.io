@@ -1,4 +1,4 @@
-baseURL: 'https://airplane.wiki/'
+baseURL: 'https:/vinci-217.github.io/airplane'
 languageCode: 'en-us'
 title: 'Airplane Space'
 theme: 'hugo-theme-ladder'
