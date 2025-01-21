@@ -1,26 +1,26 @@
-baseURL: 'https:/vinci-217.github.io/airplane/'
-languageCode: 'en-us'
-title: 'Airplane Space'
-theme: 'hugo-theme-ladder'
-defaultContentLanguage: 'zh'
+baseURL: https://vinci-217.github.io/airplane/
+languageCode: en-us
+title: Airplane Space
+theme: hugo-theme-ladder
+defaultContentLanguage: zh
 
 params:
-  brand: '主页'
-  author: 'Airplane'
-  authorDescription: 'Build the World in Code'
-  info: '无论如何，请保持情怀不变'
-  avatarURL: 'images/airplane.jpg'
-  darkModeTheme: 'data-dark-mode'
-  favicon: 'images/airplane.jpg'
+  brand: 主页
+  author: Airplane
+  authorDescription: Build the World in Code
+  info: 无论如何，请保持情怀不变
+  avatarURL: images/airplane.jpg
+  darkModeTheme: data-dark-mode
+  favicon: images/airplane.jpg
 
 menu:
   main:
-    - name: '文章'
-      url: '/blog/'
+    - name: 文章
+      url: /blog/
       weight: 1
-    - name: '归档'
-      url: '/archive/'
+    - name: 归档
+      url: /archive/
       weight: 2
-    - name: '联系'
-      url: '/contact/'
+    - name: 联系
+      url: /contact/
       weight: 3

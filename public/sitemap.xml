@@ -2,30 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://localhost:1313/</loc>
+    <loc>http://localhost:1313/airplane/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/blog/</loc>
+    <loc>http://localhost:1313/airplane/blog/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/redis/</loc>
+    <loc>http://localhost:1313/airplane/tags/redis/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/redisson/</loc>
+    <loc>http://localhost:1313/airplane/tags/redisson/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/</loc>
+    <loc>http://localhost:1313/airplane/tags/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/zookeeper/</loc>
+    <loc>http://localhost:1313/airplane/tags/zookeeper/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/blog/lock/</loc>
+    <loc>http://localhost:1313/airplane/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/</loc>
+    <loc>http://localhost:1313/airplane/blog/lock/</loc>
     <lastmod>2025-01-21T10:28:35+08:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/categories/</loc>
+    <loc>http://localhost:1313/airplane/categories/</loc>
   </url>
 </urlset>

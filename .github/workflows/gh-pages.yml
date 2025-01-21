@@ -31,4 +31,5 @@ jobs:
         if: github.ref == 'refs/heads/main'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+          PUBLISH_DIR: ./public
+          EXTERNAL_REPOSITORY: vinci-217/airplane
