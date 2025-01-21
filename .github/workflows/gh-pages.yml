@@ -30,6 +30,6 @@ jobs:
         # below accordingly.
         if: github.ref == 'refs/heads/main'
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PUBLISH_DIR: ./public
           EXTERNAL_REPOSITORY: vinci-217
