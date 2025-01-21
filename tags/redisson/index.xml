@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Redisson on Airplane Space</title><link>https://airplane.wiki/tags/redisson/</link><description>Recent content in Redisson on Airplane Space created by</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 21 Jan 2025 10:28:35 +0800</lastBuildDate><atom:link href="https://airplane.wiki/tags/redisson/index.xml" rel="self" type="application/rss+xml"/><item><title>深入理解分布式锁</title><link>https://airplane.wiki/blog/lock/</link><pubDate>Tue, 21 Jan 2025 10:28:35 +0800</pubDate><guid>https://airplane.wiki/blog/lock/</guid><description>&lt;p>分布式锁是一种常用的技术，在高并发场景下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。&lt;/p>
+&lt;h2 id="分布式锁的特性">分布式锁的特性&lt;/h2>
+&lt;ul>
+&lt;li>互斥：不同线程之间互斥，只有一个线程能持有锁。&lt;/li>
+&lt;li>超时机制：代码耗时过长，网络原因等，导致锁一直被占用，造成死锁，所以引入超时机制，超过指定时间自动释放锁。&lt;/li>
+&lt;li>完备的锁接口：阻塞的和非阻塞的接口都要有，lock 和 tryLock。&lt;/li>
+&lt;li>可重入性：当前请求的节点 + 线程唯一标识，可以再次获取同一把锁&lt;/li>
+&lt;li>公平性：锁唤醒时候，按照顺序唤醒，不公平的话，有可能出现饥饿现象。&lt;/li>
+&lt;/ul>
+&lt;h2 id="分布式锁的原理与实现">分布式锁的原理与实现&lt;/h2>
+&lt;p>分布式锁的目的是区别于 JVM 单机锁。&lt;/p>
+&lt;p>JVM 单机锁就是在同一个 JVM 中的锁。比如你使用了 synchronized 关键字，那么就是在这同一个 JVM 中，同一时刻只能有一个线程持有锁，其他线程只能等待。但是当你的后端服务式多个机器的集群部署方式，那么 JVM 单机锁就无法满足需求了。因为你这个 JVM 锁住了，我的线程打到了另一台机器上，那就相当于没锁住，所以我们需要分布式锁。分布式锁的目的就是在多个 JVM 层之前设置的锁，这样就可以在多个机器上实现同一把锁的目的。&lt;/p>
+&lt;p>&lt;img src="image/distrubuted-lock/1734618456781.png" alt="1734618456781">&lt;/p>
+&lt;p>分布式锁的原理就是在多个机器上设置同一把锁，这个锁通常通过某些中间件实现。当一个线程想要获取锁的时候，首先会去尝试获取锁，如果获取成功，那么就可以执行任务，如果获取失败，那么就只能等待，直到锁被释放。&lt;/p>
+&lt;h3 id="mysql">MySQL&lt;/h3>
+&lt;h4 id="基于索引">基于索引&lt;/h4>
+&lt;p>基于索引的实现，是通过在数据库的某个字段上加了唯一的索引，那么只有一个线程能够对写入同一个数据，其他的线程由于索引的唯一性而无法写入，只能等待资源释放——这个唯一值被 DELETE 掉，那么可以重新写入来获取锁&lt;/p>
+&lt;p>我们可以先创建一个类似的表：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-sql" data-lang="sql">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">CREATE&lt;/span> &lt;span style="color:#66d9ef">TABLE&lt;/span> &lt;span style="color:#f92672">`&lt;/span>database_lock&lt;span style="color:#f92672">`&lt;/span> (
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">`&lt;/span>id&lt;span style="color:#f92672">`&lt;/span> BIGINT &lt;span style="color:#66d9ef">NOT&lt;/span> &lt;span style="color:#66d9ef">NULL&lt;/span> AUTO_INCREMENT,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">`&lt;/span>resource&lt;span style="color:#f92672">`&lt;/span> int &lt;span style="color:#66d9ef">NOT&lt;/span> &lt;span style="color:#66d9ef">NULL&lt;/span> &lt;span style="color:#66d9ef">COMMENT&lt;/span> &lt;span style="color:#e6db74">&amp;#39;锁定的资源&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">`&lt;/span>description&lt;span style="color:#f92672">`&lt;/span> varchar(&lt;span style="color:#ae81ff">1024&lt;/span>) &lt;span style="color:#66d9ef">NOT&lt;/span> &lt;span style="color:#66d9ef">NULL&lt;/span> &lt;span style="color:#66d9ef">DEFAULT&lt;/span> &lt;span style="color:#e6db74">&amp;#34;&amp;#34;&lt;/span> &lt;span style="color:#66d9ef">COMMENT&lt;/span> &lt;span style="color:#e6db74">&amp;#39;描述&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">PRIMARY&lt;/span> &lt;span style="color:#66d9ef">KEY&lt;/span> (&lt;span style="color:#f92672">`&lt;/span>id&lt;span style="color:#f92672">`&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">UNIQUE&lt;/span> &lt;span style="color:#66d9ef">KEY&lt;/span> &lt;span style="color:#f92672">`&lt;/span>uiq_idx_resource&lt;span style="color:#f92672">`&lt;/span> (&lt;span style="color:#f92672">`&lt;/span>resource&lt;span style="color:#f92672">`&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>) ENGINE&lt;span style="color:#f92672">=&lt;/span>InnoDB &lt;span style="color:#66d9ef">DEFAULT&lt;/span> CHARSET&lt;span style="color:#f92672">=&lt;/span>utf8mb4 &lt;span style="color:#66d9ef">COMMENT&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">&amp;#39;数据库分布式锁表&amp;#39;&lt;/span>;
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>其中的 resource 就是锁的名字，locked_at 就是锁的创建时间。&lt;/p>
+&lt;p>这里我们给数据库加了一个唯一索引，目的是对资源进唯一性约束。这样在写入同一个数据时，只能有一个线程写入，其他线程只能失败。通过这样的方法就实现了一个分布式锁。&lt;/p>
+&lt;p>这种锁的实现比较简单，但也会面临锁无法过期，锁的可靠性依赖于 MySQL 数据库的可用性等等问题。&lt;/p>
+&lt;h4 id="基于乐观锁">基于乐观锁&lt;/h4>
+&lt;p>基于乐观锁的实现原理是多个线程可以同时对资源进行修改，但最终只能有一个修改成功，其他的回退。乐观锁的实现一般是基于版本号的机制，比如在更新数据时，先获取当前版本号，然后更新数据，再更新版本号。如果更新失败，说明数据已经被其他线程更新过了，那么就需要重试。&lt;/p>
+&lt;p>例如建立如下的数据库表：&lt;/p>
+&lt;div class="highlight">&lt;pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">&lt;code class="language-sql" data-lang="sql">&lt;span style="display:flex;">&lt;span>&lt;span style="color:#66d9ef">CREATE&lt;/span> &lt;span style="color:#66d9ef">TABLE&lt;/span> &lt;span style="color:#f92672">`&lt;/span>optimistic_lock&lt;span style="color:#f92672">`&lt;/span> (
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">`&lt;/span>id&lt;span style="color:#f92672">`&lt;/span> BIGINT &lt;span style="color:#66d9ef">NOT&lt;/span> &lt;span style="color:#66d9ef">NULL&lt;/span> AUTO_INCREMENT,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">`&lt;/span>resource&lt;span style="color:#f92672">`&lt;/span> int &lt;span style="color:#66d9ef">NOT&lt;/span> &lt;span style="color:#66d9ef">NULL&lt;/span> &lt;span style="color:#66d9ef">COMMENT&lt;/span> &lt;span style="color:#e6db74">&amp;#39;锁定的资源&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">`&lt;/span>&lt;span style="color:#66d9ef">version&lt;/span>&lt;span style="color:#f92672">`&lt;/span> int &lt;span style="color:#66d9ef">NOT&lt;/span> &lt;span style="color:#66d9ef">NULL&lt;/span> &lt;span style="color:#66d9ef">COMMENT&lt;/span> &lt;span style="color:#e6db74">&amp;#39;版本信息&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">`&lt;/span>created_at&lt;span style="color:#f92672">`&lt;/span> datetime &lt;span style="color:#66d9ef">COMMENT&lt;/span> &lt;span style="color:#e6db74">&amp;#39;创建时间&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">`&lt;/span>updated_at&lt;span style="color:#f92672">`&lt;/span> datetime &lt;span style="color:#66d9ef">COMMENT&lt;/span> &lt;span style="color:#e6db74">&amp;#39;更新时间&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#f92672">`&lt;/span>deleted_at&lt;span style="color:#f92672">`&lt;/span> datetime &lt;span style="color:#66d9ef">COMMENT&lt;/span> &lt;span style="color:#e6db74">&amp;#39;删除时间&amp;#39;&lt;/span>,
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">PRIMARY&lt;/span> &lt;span style="color:#66d9ef">KEY&lt;/span> (&lt;span style="color:#f92672">`&lt;/span>id&lt;span style="color:#f92672">`&lt;/span>),
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> &lt;span style="color:#66d9ef">UNIQUE&lt;/span> &lt;span style="color:#66d9ef">KEY&lt;/span> &lt;span style="color:#f92672">`&lt;/span>uiq_idx_resource&lt;span style="color:#f92672">`&lt;/span> (&lt;span style="color:#f92672">`&lt;/span>resource&lt;span style="color:#f92672">`&lt;/span>)
+&lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>) ENGINE&lt;span style="color:#f92672">=&lt;/span>InnoDB &lt;span style="color:#66d9ef">DEFAULT&lt;/span> CHARSET&lt;span style="color:#f92672">=&lt;/span>utf8mb4 &lt;span style="color:#66d9ef">COMMENT&lt;/span>&lt;span style="color:#f92672">=&lt;/span>&lt;span style="color:#e6db74">&amp;#39;数据库分布式锁表&amp;#39;&lt;/span>;
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>每个线程的执行逻辑如下：&lt;/p>
+&lt;ul>
+&lt;li>获取资源： SELECT resource, version FROM optimistic_lock WHERE id = 1&lt;/li>
+&lt;li>执行业务逻辑&lt;/li>
+&lt;li>更新资源：UPDATE optimistic_lock SET resource = resource -1, version = version + 1 WHERE id = 1 AND version = oldVersion&lt;/li>
+&lt;/ul>
+&lt;p>通过比对修改后的 version 和修改之前的 oldVersion，如果一致，说明数据没有被其他线程更新过，那么就更新成功，否则就需要重试。&lt;/p>
+&lt;p>这种锁的实现比较复杂，但也能保证数据的一致性。在检测数据冲突时并不依赖数据库本身的锁机制，不会影响请求的性能。但是需要对表的设计增加额外的字段，增加了数据库的冗余。并且高并发的情况下增加了重试的次数，会影响性能。&lt;/p>
+&lt;h4 id="基于悲观锁">基于悲观锁&lt;/h4>
+&lt;p>基于悲观锁的实现原理是多个线程只能一个一个地获取锁，直到获取锁的线程释放锁，其他线程才能获取锁。我们在基于 MySQL 的悲观锁的实现中，一般采用 MySQL 自带的锁机制，比如 SELECT &amp;hellip; FOR UPDATE。数据库会在查询的过程中加上排他锁，那么这样别的事务就无法对该资源进行修改。&lt;/p>
+&lt;p>基于悲观锁的实现过程如下：&lt;/p>
+&lt;ul>
+&lt;li>获取资源： SELECT * FROM optimistic_lock WHERE id = 1 FOR UPDATE&lt;/li>
+&lt;li>执行业务逻辑&lt;/li>
+&lt;li>释放资源：COMMIT&lt;/li>
+&lt;/ul>
+&lt;p>相当于我们基于 SELECT &amp;hellip; FOR UPDATE 获取了这行数据的锁，并且在同一事务下执行修改的业务逻辑，最终在 COMMIT 提交事务时释放锁。&lt;/p>
+&lt;p>这种锁的的实现也比较简单，主要是基于数据库的事务和行锁。但要注意行锁失效的情况。并且每次请求都会额外产生加锁的开销且未获取到锁的请求将会阻塞等待锁的获取，在高并发环境下，容易造成大量请求阻塞，影响系统可用性。&lt;/p>
+&lt;h3 id="zookeeper">Zookeeper&lt;/h3>
+&lt;p>基于 Zookeeper 的分布式锁，主要来自于 Zookeeper 的两个机制&lt;/p>
+&lt;ul>
+&lt;li>临时顺序节点机制&lt;/li>
+&lt;/ul>
+&lt;p>Zookeeper 的节点是一个类似于文件系统的目录结构，每个节点都可以设置临时顺序节点，也就是说，在创建节点时，可以指定一个顺序，然后 Zookeeper 会根据这个顺序来分配节点的唯一标识符。除此以外节点也可以被标记为持久节点，持久节点会一直存在直到主动删除。&lt;/p>
+&lt;ul>
+&lt;li>watch 机制&lt;/li>
+&lt;/ul>
+&lt;p>Zookeeper 的 watch 机制允许用户在指定的节点上注册一个监听器，当节点发生变化时，Zookeeper 会通知监听器，并触发监听器的回调函数。&lt;/p>
+&lt;p>基于这两个机制，我们可以实现一个基于 Zookeeper 的分布式锁。&lt;/p>
+&lt;p>我们首先建立一个父节点，这个父节点是一个持久节点，用来表示共享资源。然后在父节点下创建临时顺序节点，这个临时顺序节点用来标识当前获得锁的线程。最终在父节点之下建立了一个类似于队列的结构。然后判断当前节点是不是最小的节点，如果是最小的节点，那么就获取锁，否则就监听前一个节点的删除事件，直到获得锁。每次节点使用完共享资源，就会删除该节点，进而释放锁，后面的节点通过 watch 监听前一个节点的删除事件，获得锁。&lt;/p>
+&lt;p>&lt;img src="image/distrubuted-lock/1734620690387.png" alt="1734620690387">&lt;/p>
+&lt;p>Zookeeper 实现分布式锁的好处就是可以实现顺序的公平锁。并且可以实现强一致性，所有的操作都可以被保证是原子性的。假如某个节点宕机了，那么会自动释放锁，防止了死锁，提高了系统的可用性。&lt;/p>
+&lt;p>但是坏处就是，节点的创建和销毁对性能开销比较大，在高并发的环境下可能有较大的性能问题。另外，Zookeeper 的 watch 机制也会增加系统的复杂度，需要考虑节点的删除和创建的时机，以及节点的连接状态等。&lt;/p>
+&lt;h3 id="redis">Redis&lt;/h3>
+&lt;p>用 Redis 实现分布式锁，利用的是 SETNX+EXPIRE 命令。&lt;/p>
+&lt;p>SETNX 命令的作用是设置一个 key，当 key 不存在时，返回 1，如果 key 已经存在，返回 0。EXPIRE 命令的作用是设置一个 key 的过期时间，当 key 过期时，Redis 会自动删除该 key。&lt;/p>
+&lt;p>一般这两条命令写在一行来确保指令的原子性，如：&lt;/p>
+&lt;pre tabindex="0">&lt;code class="language-redis" data-lang="redis">SETNX lock_key some_unique_value EXPIRE lock_key 10 # 设置过期时间为10秒
+&lt;/code>&lt;/pre>&lt;p>其中 lock_key 是锁的名字，some_unique_value 是唯一的值，10 是过期时间。&lt;/p>
+&lt;p>当两个线程同时执行这个命令时，只有一个线程会成功对 lock_key 的值进行修改，其他线程会失败，这样就达到了分布式锁的目的。&lt;/p>
+&lt;p>基于 Redis 实现分布式锁，由于是对值的修改，性能比较高。但是如果是在 Redis 集群环境下，由于 Redis 集群同步是异步的。如果在 Master 节点上设置锁，Slave 节点可能没有同步到最新的数据。此时 Master 节点崩溃了但是理论上锁不应当被释放，但由于 Master 的宕机导致了锁物理上被释放，所以其他客户端可能会加新的锁来对共享资源进行修改，这样就出现了问题。&lt;/p>
+&lt;p>解决这个问题的方法就是 RedLock 算法——也就是 Redisson 的实现原理。&lt;/p>
+&lt;h3 id="redisson">Redisson&lt;/h3>
+&lt;p>Redisson 的特性有：看门狗机制、集群支持、公平锁等等&lt;/p>
+&lt;p>Redisson 的公平锁的实现原理类似于 ReentrankLock 的公平锁机制，主要维护一个等待队列，通过控制锁的获取顺序来实现。&lt;/p>
+&lt;p>Redisson 的看门狗机制目的是检查锁的状态，自动管理分布式锁过期时间。其实现主要通过一个后台线程（俗称看门狗），每隔锁的 1/3 时间检查锁的状态，只要持有锁的线程仍在执行且没有主动释放锁，看门狗就会持续进行续期操作。如果没有线程持有锁，看门狗就会自动释放锁。&lt;/p>
+&lt;p>&lt;img src="image/distrubuted-lock/1734689205776.png" alt="1734689205776">&lt;/p>
+&lt;p>RedLock 算法的主要目的是为了解决 Master 节点宕机导致锁的释放问题。RedLock 算法的基本思路是，在多个 Redis 节点上同时加锁，只要大多数 Redis 节点都加锁成功，那么加锁成功；如果加锁失败，则释放所有锁并重试。&lt;/p>
+&lt;p>RedLock 算法的流程如下：&lt;/p>
+&lt;ol>
+&lt;li>客户端获取当前时间戳。&lt;/li>
+&lt;li>客户端在每个 Redis 节点上尝试用相同的锁名和 UUID 获取锁，并设置一个较短的过期时间。获取成功则记录加锁节点，否则记录失败节点。并记录加锁的总用时。&lt;/li>
+&lt;li>如果成功加锁的节点大于等于 N/2+1（N 为 Redis 节点数），并且获取锁的总时间小于锁的过期时间，则认为加锁成功并执行业务逻辑；否则认为获取锁失败，释放所有锁&lt;/li>
+&lt;/ol>
+&lt;p>&lt;img src="image/distrubuted-lock/1734689465848.png" alt="1734689465848">&lt;/p>
+&lt;p>Redisson 通过 RedLock 算法，保证了集群环境中锁的可靠性。&lt;/p>
+&lt;h2 id="分布式锁的使用场景">分布式锁的使用场景&lt;/h2>
+&lt;p>分布式锁的核心目的是保证共享资源的独占。其使用场景有如下：&lt;/p>
+&lt;ol>
+&lt;li>多个应用实例需要同时修改同一份数据，需要保证数据的一致性。例如：秒杀抢购、优惠券领取等。&lt;/li>
+&lt;li>系统需要进行任务调度，任务之间需要互斥执行。例如：定时任务等。&lt;/li>
+&lt;li>避免重复处理数据。例如：调度任务在多台机器重复执行，缓存过期所有请求都去加载数据库。&lt;/li>
+&lt;li>保证数据的正确性。例如：秒杀的时候防止商品超卖，表单重复提交，接口幂等性。&lt;/li>
+&lt;/ol>
+&lt;h3 id="参考文献">参考文献&lt;/h3>
+&lt;p>&lt;a href="https://blog.csdn.net/u013474436/article/details/104924782">基于 MySQL 实现的分布式锁&lt;/a>&lt;/p>
+&lt;p>&lt;a href="https://blog.csdn.net/weixin_45683778/article/details/144564485">【MySQL】优雅的使用 MySQL 实现分布式锁&lt;/a>&lt;/p>
+&lt;p>&lt;a href="https://blog.csdn.net/Fireworkit/article/details/136968331">Zookeeper 实现分布式锁（Zk 分布式锁）&lt;/a>&lt;/p>
+&lt;p>&lt;a href="https://mp.weixin.qq.com/s/hvTx6_WSZ82ok3na7L1IiA">阿里技术-分布式锁实现原理与最佳实践&lt;/a>&lt;/p></description></item></channel></rss>
