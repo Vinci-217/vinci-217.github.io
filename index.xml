@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Airplane Space</title><link>https://vinci-217.github.io/</link><description>Recent content on Airplane Space created by</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Wed, 22 Jan 2025 10:28:35 +0800</lastBuildDate><atom:link href="https://vinci-217.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>深入理解分布式锁的原理和技术选型</title><link>https://vinci-217.github.io/blog/lock/</link><pubDate>Wed, 22 Jan 2025 10:28:35 +0800</pubDate><guid>https://vinci-217.github.io/blog/lock/</guid><description>&lt;p>分布式锁是一种常用的技术，在高并发场景下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Airplane Space</title><link>https://vinci-217.github.io/</link><description>Recent content on Airplane Space created by</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Wed, 22 Jan 2025 10:28:35 +0800</lastBuildDate><atom:link href="https://vinci-217.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>深入理解分布式锁的原理和技术选型</title><link>https://vinci-217.github.io/blog/lock/</link><pubDate>Wed, 22 Jan 2025 10:28:35 +0800</pubDate><guid>https://vinci-217.github.io/blog/lock/</guid><description>&lt;p>分布式锁是一种常用的技术，在分布式环境下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。&lt;/p>
 &lt;h2 id="分布式锁的主要特性">分布式锁的主要特性&lt;/h2>
 &lt;ul>
 &lt;li>互斥：不同线程之间互斥，只有一个线程能持有锁。&lt;/li>
@@ -8,7 +8,7 @@
 &lt;/ul>
 &lt;h2 id="分布式锁的原理与实现">分布式锁的原理与实现&lt;/h2>
 &lt;p>分布式锁的目的是区别于 JVM 单机锁。&lt;/p>
-&lt;p>JVM 单机锁就是在同一个 JVM 中的锁。比如你使用了 synchronized 关键字，那么就是在这同一个 JVM 中，同一时刻只能有一个线程持有锁，其他线程只能等待。但是当你的后端服务式多个机器的集群部署方式，那么 JVM 单机锁就无法满足需求了。因为你这个 JVM 锁住了，我的线程打到了另一台机器上，那就相当于没锁住，所以我们需要分布式锁。分布式锁的目的就是在多个 JVM 层之前设置的锁，这样就可以在多个机器上实现同一把锁的目的。&lt;/p>
+&lt;p>JVM 单机锁就是在同一个 JVM 中的锁。比如你使用了 synchronized 关键字，那么就是在这同一个 JVM 中，同一时刻只能有一个线程持有锁，其他线程只能等待。但是当你的后端服务是分布式集群部署的方式，那么 JVM 单机锁就无法满足需求了。因为你这个 JVM 锁住了，我的线程打到了另一台机器上，那就相当于没锁住，所以我们需要分布式锁。分布式锁的目的就是在多个 JVM 层之前设置的锁，这样就可以在多个机器上实现同一把锁的目的。&lt;/p>
 &lt;p>&lt;img src="image/image-3.png" alt="alt text">&lt;/p>
 &lt;p>分布式锁的原理就是在多个机器上设置同一把锁，这个锁通常通过某些中间件实现。当一个线程想要获取锁的时候，首先会去尝试获取锁，如果获取成功，那么就可以执行任务，如果获取失败，那么就只能等待，直到锁被释放。&lt;/p>
 &lt;h3 id="mysql">MySQL&lt;/h3>
