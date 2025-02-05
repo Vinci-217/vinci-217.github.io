@@ -1,4 +1,13 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Airplane Space</title><link>https://vinci-217.github.io/</link><description>Recent content on Airplane Space created by</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Wed, 22 Jan 2025 10:28:35 +0800</lastBuildDate><atom:link href="https://vinci-217.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>深入理解分布式锁的原理和技术选型</title><link>https://vinci-217.github.io/blog/lock/</link><pubDate>Wed, 22 Jan 2025 10:28:35 +0800</pubDate><guid>https://vinci-217.github.io/blog/lock/</guid><description>&lt;p>分布式锁是一种常用的技术，在分布式环境下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Airplane Space</title><link>https://vinci-217.github.io/</link><description>Recent content on Airplane Space created by</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sat, 01 Feb 2025 10:30:31 +0800</lastBuildDate><atom:link href="https://vinci-217.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>详解几种常见限流算法及限流器设计</title><link>https://vinci-217.github.io/blog/rate-limit/</link><pubDate>Sat, 01 Feb 2025 10:30:31 +0800</pubDate><guid>https://vinci-217.github.io/blog/rate-limit/</guid><description>&lt;p>在服务端开发中，限流（Rate Limiting）是一种常见的技术，用于控制请求的流量，防止请求过多导致服务器压力过大或响应时间过长。限流算法有很多种，本文将介绍主要的几种常见限流算法及限流器设计。&lt;/p>
+&lt;h2 id="限流场景">限流场景&lt;/h2>
+&lt;p>在实际开发过程中，我们需要考虑一些需要限流的场景。比如防止突发流量激增导致服务崩溃，或者防止恶意请求导致服务器资源占用过多，又或者某些业务场景下我们需要限制用户的请求频率。&lt;/p>
+&lt;p>衡量请求频率的指标主要有两种：&lt;/p>
+&lt;p>TPS: 每秒事务数（Transaction Per Second）&lt;/p>
+&lt;p>TPS代表每秒事务数，是衡量系统处理能力的一个指标。事务通常指的是一组操作的集合，可能包括多个数据库操作、消息队列处理等。在许多情况下，TPS用于衡量数据库系统或应用程序在特定负载下的性能。&lt;/p>
+&lt;p>QPS: 每秒查询数（Query Per Second）&lt;/p>
+&lt;p>QPS代表每秒查询数，是衡量系统查询能力的一个指标。查询通常指的是数据库查询操作，包括SELECT、INSERT、UPDATE、DELETE等。在许多情况下，QPS用于衡量数据库系统或应用程序的查询性能。&lt;/p>
+&lt;p>在某些系统中，一个事务可能包含多个查询，因此在这些情况下，TPS和QPS之间可以有一定的关系。例如，一个事务包含三个查询，那么在理想情况下，QPS可能是TPS的三倍。&lt;/p>
+&lt;h2 id="限流算法">限流算法&lt;/h2></description></item><item><title>深入理解分布式锁的原理和技术选型</title><link>https://vinci-217.github.io/blog/lock/</link><pubDate>Wed, 22 Jan 2025 10:28:35 +0800</pubDate><guid>https://vinci-217.github.io/blog/lock/</guid><description>&lt;p>分布式锁是一种常用的技术，在分布式环境下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。&lt;/p>
 &lt;h2 id="分布式锁的主要特性">分布式锁的主要特性&lt;/h2>
 &lt;ul>
 &lt;li>互斥：不同线程之间互斥，只有一个线程能持有锁。&lt;/li>
