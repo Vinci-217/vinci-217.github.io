@@ -166,9 +166,9 @@
 &lt;h2 id="拓展延伸">拓展延伸&lt;/h2>
 &lt;p>其实限流保护的策略不仅仅在后端服务上，有时候在产品本身的设计上也可以考虑。比如 12306 在抢票购票设计时，会将不同车次的购买时间分隔开，以及提前一定时间前购票。从产品的角度，避免了某一个时间突然的高并发，反而将流量相对的均匀开，也是一种不错的在流量方面的保护策略。&lt;/p>
 &lt;h2 id="参考文献">参考文献&lt;/h2>
-&lt;p>&lt;a href="https://www.bilibili.com/list/watchlater?oid=113793128465727&amp;amp;bvid=BV1NTrvYnEbM&amp;amp;spm_id_from=333.1007.top_right_bar_window_view_later.content.click">【java面试加分项】12306超高并发如何保证数据一致性？&lt;/a>
-&lt;a href="https://blog.csdn.net/qq_42055933/article/details/143694116">Java实现令牌桶算法：详细讲解与代码示例&lt;/a>
-&lt;a href="https://github.com/wfnuser/Algorithms">极客时间令牌桶算法代码&lt;/a>&lt;/p></description></item><item><title>深入理解分布式锁的原理和技术选型</title><link>https://vinci-217.github.io/blog/lock/</link><pubDate>Wed, 22 Jan 2025 10:28:35 +0800</pubDate><guid>https://vinci-217.github.io/blog/lock/</guid><description>&lt;p>分布式锁是一种常用的技术，在分布式环境下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。&lt;/p>
+&lt;p>&lt;a href="https://www.bilibili.com/list/watchlater?oid=113793128465727&amp;amp;bvid=BV1NTrvYnEbM&amp;amp;spm_id_from=333.1007.top_right_bar_window_view_later.content.click">【java 面试加分项】12306 超高并发如何保证数据一致性？&lt;/a>&lt;/p>
+&lt;p>&lt;a href="https://blog.csdn.net/qq_42055933/article/details/143694116">Java 实现令牌桶算法：详细讲解与代码示例&lt;/a>&lt;/p>
+&lt;p>&lt;a href="https://github.com/wfnuser/Algorithms">极客时间令牌桶算法代码&lt;/a>&lt;/p></description></item><item><title>深入理解分布式锁的原理和技术选型</title><link>https://vinci-217.github.io/blog/lock/</link><pubDate>Wed, 22 Jan 2025 10:28:35 +0800</pubDate><guid>https://vinci-217.github.io/blog/lock/</guid><description>&lt;p>分布式锁是一种常用的技术，在分布式环境下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。&lt;/p>
 &lt;h2 id="分布式锁的主要特性">分布式锁的主要特性&lt;/h2>
 &lt;ul>
 &lt;li>互斥：不同线程之间互斥，只有一个线程能持有锁。&lt;/li>
