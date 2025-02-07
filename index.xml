@@ -197,11 +197,11 @@
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> System.&lt;span style="color:#a6e22e">out&lt;/span>.&lt;span style="color:#a6e22e">println&lt;/span>(&lt;span style="color:#e6db74">&amp;#34;Handling request &amp;#34;&lt;/span> &lt;span style="color:#f92672">+&lt;/span> requestNumber &lt;span style="color:#f92672">+&lt;/span> &lt;span style="color:#e6db74">&amp;#34; at &amp;#34;&lt;/span> &lt;span style="color:#f92672">+&lt;/span> System.&lt;span style="color:#a6e22e">currentTimeMillis&lt;/span>());
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span> }
 &lt;/span>&lt;/span>&lt;span style="display:flex;">&lt;span>}
-&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>在Guava内部为了优化空间，并没有采用设计一个桶，而是采用了时间比较的方式计算令牌数量，从而实现限流的功能。&lt;/p>
-&lt;p>Guava的限流器有突发模式（SmoothBursty）和预热模式（SmoothWarmingUp）两种。突发模式令牌以稳定的速率生成，。在预热模式下，限流器发放令牌的速度会随着流量的上涨逐渐加快，从而让服务端平滑从空闲状态过度到高负载状态。（类似于TCP的拥塞控制算法的思想）&lt;/p>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/div>&lt;p>在 Guava 内部为了优化空间，并没有采用设计一个桶，而是采用了时间比较的方式计算令牌数量，从而实现限流的功能。&lt;/p>
+&lt;p>Guava 的限流器有突发模式（SmoothBursty）和预热模式（SmoothWarmingUp）两种。突发模式令牌以稳定的速率生成，。在预热模式下，限流器发放令牌的速度会随着流量的上涨逐渐加快，从而让服务端平滑从空闲状态过度到高负载状态。（类似于 TCP 的拥塞控制算法的思想）&lt;/p>
 &lt;h2 id="自适应限流">自适应限流&lt;/h2>
 &lt;p>自适应限流是指根据当前的请求量和系统的负载情况，动态调整限流策略。比如在高峰期，可以适当提高限流阈值，在低谷期，可以适当降低限流阈值，从而达到平衡。&lt;/p>
-&lt;p>阿里的AHAS自适应监控、&lt;a href="https://www.sofastack.tech/blog/service-mesh-exploration-thinking-after-1111-1/">蚂蚁的MOSNzk自适应限流&lt;/a>以CPU利用率为指标，使用PID控制器进行自适应限流。而&lt;a href="https://github.com/alibaba/Sentinel/wiki/%E7%B3%BB%E7%BB%9F%E8%87%AA%E9%80%82%E5%BA%94%E9%99%90%E6%B5%81">Sentinel&lt;/a>这种则采用CPU负载、QPS、RT、并发请求等指标，设定并发控制算法，计算服务请求的最大并发数，并根据当前的请求量进行限流。&lt;/p>
+&lt;p>阿里的 AHAS 自适应监控、&lt;a href="https://www.sofastack.tech/blog/service-mesh-exploration-thinking-after-1111-1/">蚂蚁的 MOSNzk 自适应限流&lt;/a>以 CPU 利用率为指标，使用 PID 控制器进行自适应限流。而&lt;a href="https://github.com/alibaba/Sentinel/wiki/%E7%B3%BB%E7%BB%9F%E8%87%AA%E9%80%82%E5%BA%94%E9%99%90%E6%B5%81">Sentinel&lt;/a>这种则采用 CPU 负载、QPS、RT、并发请求等指标，设定并发控制算法，计算服务请求的最大并发数，并根据当前的请求量进行限流。&lt;/p>
 &lt;h2 id="拓展延伸">拓展延伸&lt;/h2>
 &lt;p>其实限流保护的策略不仅仅在后端服务上，有时候在产品本身的设计上也可以考虑。比如 12306 在抢票购票设计时，会将不同车次的购买时间分隔开，以及提前一定时间前购票。从产品的角度，避免了某一个时间突然的高并发，反而将流量相对的均匀开，也是一种不错的在流量方面的保护策略。&lt;/p>
 &lt;p>并且 12306 在流量策略上，还采用了异步交易排队系统的方案。就是将 12306 网站设计成一个大超市，根据访问量变化开启多个“收银台”，将每个购票者分配到不同的“收银台”前排队，以减少拥堵。其内部猜测应该是采用了某种服务调度的策略，根据请求量大小进行了负载均衡，从而减少了流量单个堆积。&lt;/p>
