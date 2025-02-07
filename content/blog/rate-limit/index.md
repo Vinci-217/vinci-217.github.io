@@ -256,15 +256,15 @@ public class RateLimiterExample {
 }
 ```
 
-在Guava内部为了优化空间，并没有采用设计一个桶，而是采用了时间比较的方式计算令牌数量，从而实现限流的功能。
+在 Guava 内部为了优化空间，并没有采用设计一个桶，而是采用了时间比较的方式计算令牌数量，从而实现限流的功能。
 
-Guava的限流器有突发模式（SmoothBursty）和预热模式（SmoothWarmingUp）两种。突发模式令牌以稳定的速率生成，。在预热模式下，限流器发放令牌的速度会随着流量的上涨逐渐加快，从而让服务端平滑从空闲状态过度到高负载状态。（类似于TCP的拥塞控制算法的思想）
+Guava 的限流器有突发模式（SmoothBursty）和预热模式（SmoothWarmingUp）两种。突发模式令牌以稳定的速率生成，。在预热模式下，限流器发放令牌的速度会随着流量的上涨逐渐加快，从而让服务端平滑从空闲状态过度到高负载状态。（类似于 TCP 的拥塞控制算法的思想）
 
 ## 自适应限流
 
 自适应限流是指根据当前的请求量和系统的负载情况，动态调整限流策略。比如在高峰期，可以适当提高限流阈值，在低谷期，可以适当降低限流阈值，从而达到平衡。
 
-阿里的AHAS自适应监控、[蚂蚁的MOSNzk自适应限流](https://www.sofastack.tech/blog/service-mesh-exploration-thinking-after-1111-1/)以CPU利用率为指标，使用PID控制器进行自适应限流。而[Sentinel](https://github.com/alibaba/Sentinel/wiki/%E7%B3%BB%E7%BB%9F%E8%87%AA%E9%80%82%E5%BA%94%E9%99%90%E6%B5%81)这种则采用CPU负载、QPS、RT、并发请求等指标，设定并发控制算法，计算服务请求的最大并发数，并根据当前的请求量进行限流。
+阿里的 AHAS 自适应监控、[蚂蚁的 MOSNzk 自适应限流](https://www.sofastack.tech/blog/service-mesh-exploration-thinking-after-1111-1/)以 CPU 利用率为指标，使用 PID 控制器进行自适应限流。而[Sentinel](https://github.com/alibaba/Sentinel/wiki/%E7%B3%BB%E7%BB%9F%E8%87%AA%E9%80%82%E5%BA%94%E9%99%90%E6%B5%81)这种则采用 CPU 负载、QPS、RT、并发请求等指标，设定并发控制算法，计算服务请求的最大并发数，并根据当前的请求量进行限流。
 
 ## 拓展延伸
 
