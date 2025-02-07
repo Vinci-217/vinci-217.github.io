@@ -219,6 +219,53 @@ import (
 
 ## Guava 中限流的实现
 
+很多著名的限流项目如 Resukuebce4j、Sentinel 以及某些大厂自研限流组件都参考了 Guava 的限流实现。而 Guava 的限流算法采用的就是令牌桶算法。一个示例 demo 如下：
+
+```java
+import com.google.common.util.concurrent.RateLimiter;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class RateLimiterExample {
+
+    public static void main(String[] args) {
+        // 创建一个RateLimiter，每秒允许处理5个请求
+        RateLimiter rateLimiter = RateLimiter.create(5.0);
+
+        // 创建一个固定大小的线程池
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+        // 模拟处理20个请求
+        for (int i = 0; i < 20; i++) {
+            final int requestNumber = i;
+            executorService.submit(() -> handleRequest(requestNumber, rateLimiter));
+        }
+
+        // 关闭线程池
+        executorService.shutdown();
+    }
+
+    private static void handleRequest(int requestNumber, RateLimiter rateLimiter) {
+        // 获取一个令牌，可能会阻塞直到令牌可用
+        rateLimiter.acquire();
+
+        // 模拟处理请求的逻辑
+        System.out.println("Handling request " + requestNumber + " at " + System.currentTimeMillis());
+    }
+}
+```
+
+在Guava内部为了优化空间，并没有采用设计一个桶，而是采用了时间比较的方式计算令牌数量，从而实现限流的功能。
+
+Guava的限流器有突发模式（SmoothBursty）和预热模式（SmoothWarmingUp）两种。突发模式令牌以稳定的速率生成，。在预热模式下，限流器发放令牌的速度会随着流量的上涨逐渐加快，从而让服务端平滑从空闲状态过度到高负载状态。（类似于TCP的拥塞控制算法的思想）
+
+## 自适应限流
+
+自适应限流是指根据当前的请求量和系统的负载情况，动态调整限流策略。比如在高峰期，可以适当提高限流阈值，在低谷期，可以适当降低限流阈值，从而达到平衡。
+
+阿里的AHAS自适应监控、[蚂蚁的MOSNzk自适应限流](https://www.sofastack.tech/blog/service-mesh-exploration-thinking-after-1111-1/)以CPU利用率为指标，使用PID控制器进行自适应限流。而[Sentinel](https://github.com/alibaba/Sentinel/wiki/%E7%B3%BB%E7%BB%9F%E8%87%AA%E9%80%82%E5%BA%94%E9%99%90%E6%B5%81)这种则采用CPU负载、QPS、RT、并发请求等指标，设定并发控制算法，计算服务请求的最大并发数，并根据当前的请求量进行限流。
+
 ## 拓展延伸
 
 其实限流保护的策略不仅仅在后端服务上，有时候在产品本身的设计上也可以考虑。比如 12306 在抢票购票设计时，会将不同车次的购买时间分隔开，以及提前一定时间前购票。从产品的角度，避免了某一个时间突然的高并发，反而将流量相对的均匀开，也是一种不错的在流量方面的保护策略。
