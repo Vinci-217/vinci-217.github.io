@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Airplane Space</title><link>https://vinci-217.github.io/</link><description>Recent content on Airplane Space created by</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Fri, 07 Feb 2025 19:52:18 +0800</lastBuildDate><atom:link href="https://vinci-217.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>一文归纳数据库集群技术要点</title><link>https://vinci-217.github.io/blog/database-cluster/</link><pubDate>Fri, 07 Feb 2025 19:52:18 +0800</pubDate><guid>https://vinci-217.github.io/blog/database-cluster/</guid><description>&lt;p>数据库是服务端开发离不开的中间件，为了提高大型项目中数据库的可用性，常常通过集群的方式部署数据库。本文将从数据库集群的技术要点出发，介绍基于 MySQL 和 Redis 的数据库集群方案。&lt;/p>
 &lt;h2 id="mysql">MySQL&lt;/h2>
-&lt;p>MySQL 的集群出现主要是为了应对高并发读写和数据库宕机的场景。针对这样的场景，MySQL 采用了多个服务集群部署、读写分离等策略来应对。MySQL 集群的方式有很多种，目的都是为了提高其可用性。&lt;/p>
+&lt;p>MySQL 最初是一种单机的数据库系统，他的集群出现主要是为了应对高并发读写和数据库宕机的场景。针对这样的场景，MySQL 采用了多个服务集群部署、读写分离等策略来应对。MySQL 集群的方式有很多种，目的都是为了提高其可用性。&lt;/p>
+&lt;h3 id="读写分离">读写分离&lt;/h3>
+&lt;p>读写分离是提高 MySQL 并发量的一种策略，其含义是使用多个具有相同数据的 MySQL 实例来分担大量查询请求。其本质上是有一个或多个主节点作为客户端写入的实例，其他的实例作为备份节点，提供只读的服务。&lt;/p>
+&lt;p>读写分离本质上相当于一种请求的负载均衡，将读请求分担到多个从节点，将写请求分担到主节点。但也会面临一些集群的问题。根据经典的 CAP 理论，网络分区容忍性必须保证，那么一致性和可用性就成为一个值得权衡的点。最明显的就是由于主从同步的延迟，可能会出现数据不一致的问题。&lt;/p>
 &lt;p>&lt;img src="image/image.png" alt="MySQL 集群架构">&lt;/p>
 &lt;h3 id="集群模式">集群模式&lt;/h3>
 &lt;h4 id="mysql-replication">MySQL Replication&lt;/h4>
@@ -21,8 +24,19 @@
 &lt;li>从库获取到主库的 binlog 后存储到本地，成为 relay log&lt;/li>
 &lt;li>从库的 sql_thread 读取 relay log，解析出具体的 sql 语句，执行 sql 语句&lt;/li>
 &lt;/ol>
+&lt;p>主从库之间的数据借助 binlog 进行复制，数据复制的一般分为同步和异步两种。很经典的问题出现了：同步复制能够很好保证数据一致性，但是性能差；异步复制反之。&lt;/p>
+&lt;p>MySQL 5.7 版本引入了半同步复制。异步复制是事务线程完全不等复制响应。同步复制是事务线程要等所有复制响应。半同步复制就是等待一部分复制响应就认为成功。&lt;/p>
 &lt;h3 id="主从延迟">主从延迟&lt;/h3>
-&lt;h3 id="读写分离">读写分离&lt;/h3>
+&lt;p>主从延迟指的是从主库生成 binlog 到从库接收到 binlog 然后执行完对应的事务之间的延迟。&lt;/p>
+&lt;p>主从延迟的原因主要有以下几点：&lt;/p>
+&lt;ol>
+&lt;li>网络延迟：主从之间网络延迟越长，主从延迟就越大。&lt;/li>
+&lt;li>某些情况下，从库的机器性能比主库的机器性能差。&lt;/li>
+&lt;li>从库的读压力过大&lt;/li>
+&lt;li>慢 sql、大事务造成的时间等待，binlog 生成速度慢，导致从库延迟。&lt;/li>
+&lt;/ol>
+&lt;p>针对主从同步的延迟，有一些可靠性和可用性的策略调整，如双 M（两个主机）、半同步复制等针对主从的调度策略，会减少主从延迟。&lt;/p>
+&lt;h3 id="分库分表">分库分表&lt;/h3>
 &lt;h2 id="redis">Redis&lt;/h2>
 &lt;h2 id="参考文献">参考文献&lt;/h2>
 &lt;ul>
