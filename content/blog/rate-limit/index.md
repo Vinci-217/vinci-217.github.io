@@ -274,8 +274,8 @@ Guava 的限流器有突发模式（SmoothBursty）和预热模式（SmoothWarmi
 
 ## 参考文献
 
-[【java 面试加分项】12306 超高并发如何保证数据一致性？](https://www.bilibili.com/list/watchlater?oid=113793128465727&bvid=BV1NTrvYnEbM&spm_id_from=333.1007.top_right_bar_window_view_later.content.click)
+- [【java 面试加分项】12306 超高并发如何保证数据一致性？](https://www.bilibili.com/list/watchlater?oid=113793128465727&bvid=BV1NTrvYnEbM&spm_id_from=333.1007.top_right_bar_window_view_later.content.click)
 
-[Java 实现令牌桶算法：详细讲解与代码示例](https://blog.csdn.net/qq_42055933/article/details/143694116)
+- [Java 实现令牌桶算法：详细讲解与代码示例](https://blog.csdn.net/qq_42055933/article/details/143694116)
 
-[极客时间令牌桶算法代码](https://github.com/wfnuser/Algorithms)
+- [极客时间令牌桶算法代码](https://github.com/wfnuser/Algorithms)
