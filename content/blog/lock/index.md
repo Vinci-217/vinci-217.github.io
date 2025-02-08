@@ -219,10 +219,10 @@ Redisson 通过唯一标识与计数器实现了锁的可重入的特性：
 
 ## 参考文献
 
-[基于 MySQL 实现的分布式锁](https://blog.csdn.net/u013474436/article/details/104924782)
+- [基于 MySQL 实现的分布式锁](https://blog.csdn.net/u013474436/article/details/104924782)
 
-[【MySQL】优雅的使用 MySQL 实现分布式锁](https://blog.csdn.net/weixin_45683778/article/details/144564485)
+- [【MySQL】优雅的使用 MySQL 实现分布式锁](https://blog.csdn.net/weixin_45683778/article/details/144564485)
 
-[Zookeeper 实现分布式锁（Zk 分布式锁）](https://blog.csdn.net/Fireworkit/article/details/136968331)
+- [Zookeeper 实现分布式锁（Zk 分布式锁）](https://blog.csdn.net/Fireworkit/article/details/136968331)
 
-[阿里技术-分布式锁实现原理与最佳实践](https://mp.weixin.qq.com/s/hvTx6_WSZ82ok3na7L1IiA)
+- [阿里技术-分布式锁实现原理与最佳实践](https://mp.weixin.qq.com/s/hvTx6_WSZ82ok3na7L1IiA)
