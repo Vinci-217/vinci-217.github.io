@@ -66,6 +66,15 @@ MySQL 5.7 版本引入了半同步复制。异步复制是事务线程完全不�
 
 如果主库提交事务的线程等待复制的时间超时了，那么这种情况下 MySQL 会自动降级为异步复制模式。
 
+一种优化方式是增强半同步复制——基于两阶段提交的优化。
+
+[两阶段提交](https://xiaolincoding.com/mysql/log/how_update.html#%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4%E7%9A%84%E8%BF%87%E7%A8%8B%E6%98%AF%E6%80%8E%E6%A0%B7%E7%9A%84)是 MySQL 用于利用类似分布式 XA 两阶段提交（分布式一致性的一种解决方法），解决 redo log 和 binlog 一致性的一种日志提交方式。
+
+![两阶段提交](image/image-1.png)
+
+增强半同步复制不同于普通的半同步复制，它的等待备库返回ACK的时间点是最后的commit之后（即图片中的步骤三之后）。步骤二生成binlog以后发给从库，从库对得到的binlog同步完毕以后主库进行步骤三commit，然后认为同步完毕。
+这样如果日志没有传给从库，主库也不会commit，保障了数据同步一致性。
+
 ### 主从延迟
 
 主从延迟指的是从主库生成 binlog 到从库接收到 binlog 然后执行完对应的事务之间的延迟。
@@ -95,3 +104,5 @@ MySQL 5.7 版本引入了半同步复制。异步复制是事务线程完全不�
 
 - [多图文，详细介绍 mysql 各个集群方案](https://www.cnblogs.com/lgx211/p/12456859.html)
 - [MySQL 中常见的几种高可用架构部署方案](https://www.cnblogs.com/ricklz/p/17335755.html)
+- [MySQL 日志：undo log、redo log、binlog 有什么用？](https://xiaolincoding.com/mysql/log/how_update.html#%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4%E7%9A%84%E8%BF%87%E7%A8%8B%E6%98%AF%E6%80%8E%E6%A0%B7%E7%9A%84)
+- [MySQL 半同步复制及半同步复制增强](https://juejin.cn/post/6981745007552102407)
