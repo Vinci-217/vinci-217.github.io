@@ -31,6 +31,11 @@
 &lt;p>半同步复制过程中有一个参数“rpl_semi_sync_master_wait_no_slave”，默认值是 1，表示等待至少一个从库的响应，如果设置为大于 1 的值，表示等待指定数量的从库的响应。&lt;/p>
 &lt;p>还有一个是”rpl_semi_sync_master_wait_point“，表示的是主库提交事务之前等待复制还是提交事务之后等待复制。，默认是先等待复制（AFTER_SYNC），再提交事务，这样不会完全丢数据。相反的配置（AFTER_COMMIT）是先提交事务，再等待复制，这样会性能好一点，但是存在宕机丢数据的风险。&lt;/p>
 &lt;p>如果主库提交事务的线程等待复制的时间超时了，那么这种情况下 MySQL 会自动降级为异步复制模式。&lt;/p>
+&lt;p>一种优化方式是增强半同步复制——基于两阶段提交的优化。&lt;/p>
+&lt;p>&lt;a href="https://xiaolincoding.com/mysql/log/how_update.html#%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4%E7%9A%84%E8%BF%87%E7%A8%8B%E6%98%AF%E6%80%8E%E6%A0%B7%E7%9A%84">两阶段提交&lt;/a>是 MySQL 用于利用类似分布式 XA 两阶段提交（分布式一致性的一种解决方法），解决 redo log 和 binlog 一致性的一种日志提交方式。&lt;/p>
+&lt;p>&lt;img src="image/image-1.png" alt="两阶段提交">&lt;/p>
+&lt;p>增强半同步复制不同于普通的半同步复制，它的等待备库返回ACK的时间点是最后的commit之后（即图片中的步骤三之后）。步骤二生成binlog以后发给从库，从库对得到的binlog同步完毕以后主库进行步骤三commit，然后认为同步完毕。
+这样如果日志没有传给从库，主库也不会commit，保障了数据同步一致性。&lt;/p>
 &lt;h3 id="主从延迟">主从延迟&lt;/h3>
 &lt;p>主从延迟指的是从主库生成 binlog 到从库接收到 binlog 然后执行完对应的事务之间的延迟。&lt;/p>
 &lt;p>主从延迟的原因主要有以下几点：&lt;/p>
@@ -51,4 +56,6 @@
 &lt;ul>
 &lt;li>&lt;a href="https://www.cnblogs.com/lgx211/p/12456859.html">多图文，详细介绍 mysql 各个集群方案&lt;/a>&lt;/li>
 &lt;li>&lt;a href="https://www.cnblogs.com/ricklz/p/17335755.html">MySQL 中常见的几种高可用架构部署方案&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://xiaolincoding.com/mysql/log/how_update.html#%E4%B8%A4%E9%98%B6%E6%AE%B5%E6%8F%90%E4%BA%A4%E7%9A%84%E8%BF%87%E7%A8%8B%E6%98%AF%E6%80%8E%E6%A0%B7%E7%9A%84">MySQL 日志：undo log、redo log、binlog 有什么用？&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://juejin.cn/post/6981745007552102407">MySQL 半同步复制及半同步复制增强&lt;/a>&lt;/li>
 &lt;/ul></description></item></channel></rss>
