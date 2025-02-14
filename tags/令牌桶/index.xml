@@ -207,13 +207,7 @@
 &lt;p>并且 12306 在流量策略上，还采用了异步交易排队系统的方案。就是将 12306 网站设计成一个大超市，根据访问量变化开启多个“收银台”，将每个购票者分配到不同的“收银台”前排队，以减少拥堵。其内部猜测应该是采用了某种服务调度的策略，根据请求量大小进行了负载均衡，从而减少了流量单个堆积。&lt;/p>
 &lt;h2 id="参考文献">参考文献&lt;/h2>
 &lt;ul>
-&lt;li>
-&lt;p>&lt;a href="https://www.bilibili.com/list/watchlater?oid=113793128465727&amp;amp;bvid=BV1NTrvYnEbM&amp;amp;spm_id_from=333.1007.top_right_bar_window_view_later.content.click">【java 面试加分项】12306 超高并发如何保证数据一致性？&lt;/a>&lt;/p>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;a href="https://blog.csdn.net/qq_42055933/article/details/143694116">Java 实现令牌桶算法：详细讲解与代码示例&lt;/a>&lt;/p>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;a href="https://github.com/wfnuser/Algorithms">极客时间令牌桶算法代码&lt;/a>&lt;/p>
-&lt;/li>
+&lt;li>&lt;a href="https://www.bilibili.com/list/watchlater?oid=113793128465727&amp;amp;bvid=BV1NTrvYnEbM&amp;amp;spm_id_from=333.1007.top_right_bar_window_view_later.content.click">【java 面试加分项】12306 超高并发如何保证数据一致性？&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://blog.csdn.net/qq_42055933/article/details/143694116">Java 实现令牌桶算法：详细讲解与代码示例&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://github.com/wfnuser/Algorithms">极客时间令牌桶算法代码&lt;/a>&lt;/li>
 &lt;/ul></description></item></channel></rss>
