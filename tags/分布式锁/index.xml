@@ -143,16 +143,8 @@
 &lt;p>实际生产环境中，我们一般推荐ZK或者Redis分布式锁。相比之下，ZK的锁的可靠性更高，Redis的锁的性能更好。具体使用那种还是取决于自己的业务需要。&lt;/p>
 &lt;h2 id="参考文献">参考文献&lt;/h2>
 &lt;ul>
-&lt;li>
-&lt;p>&lt;a href="https://blog.csdn.net/u013474436/article/details/104924782">基于 MySQL 实现的分布式锁&lt;/a>&lt;/p>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;a href="https://blog.csdn.net/weixin_45683778/article/details/144564485">【MySQL】优雅的使用 MySQL 实现分布式锁&lt;/a>&lt;/p>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;a href="https://blog.csdn.net/Fireworkit/article/details/136968331">Zookeeper 实现分布式锁（Zk 分布式锁）&lt;/a>&lt;/p>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;a href="https://mp.weixin.qq.com/s/hvTx6_WSZ82ok3na7L1IiA">阿里技术-分布式锁实现原理与最佳实践&lt;/a>&lt;/p>
-&lt;/li>
+&lt;li>&lt;a href="https://blog.csdn.net/u013474436/article/details/104924782">基于 MySQL 实现的分布式锁&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://blog.csdn.net/weixin_45683778/article/details/144564485">【MySQL】优雅的使用 MySQL 实现分布式锁&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://blog.csdn.net/Fireworkit/article/details/136968331">Zookeeper 实现分布式锁（Zk 分布式锁）&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://mp.weixin.qq.com/s/hvTx6_WSZ82ok3na7L1IiA">阿里技术-分布式锁实现原理与最佳实践&lt;/a>&lt;/li>
 &lt;/ul></description></item></channel></rss>
