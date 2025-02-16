@@ -76,13 +76,13 @@
 &lt;/ol>
 &lt;p>实际上，哨兵本身也是集群部署，在判断 Redis 实例存活/宕机时，会采用投票机制（少数服从多数）来判断数据库是否客观下线。&lt;/p>
 &lt;p>哨兵集群中真正执行将从库升级为主库的节点叫 Leader 节点，这个节点也是由其他哨兵实例投票选举+大于用户配置的参数决定。&lt;/p>
-&lt;p>哨兵模式可能会出现脑裂的问题。脑裂就是一个大脑裂开成两个，对应到Redis集群中就是出现了两个主节点。节点A一开始是主节点，由于网络抖动被认为下线了，于是哨兵集群选举了一个新节点B作为主节点。一段时间以后节点A复活了，集群会把A降级为从节点。既然是从节点，就需要与主节点B同步数据。由于A作为从节点，B作为主节点，他们是第一次同步数据，所以A会清空自己的数据，将B的RDB完全读入。但是由于B是被选出来的新主节点，他里面的数据和之前的A并不是完全相同（他们之间的同步不是强一致性，是最终一致性），所以在A作为主节点的时候，有些数据A里面有，B里面没有。那么A作为从节点的时候，清空了自己的数据，那么就可能会造成数据丢失。&lt;/p>
-&lt;p>在Redis中有两个配置的属性：&lt;/p>
+&lt;p>哨兵模式可能会出现脑裂的问题。脑裂就是一个大脑裂开成两个，对应到 Redis 集群中就是出现了两个主节点。节点 A 一开始是主节点，由于网络抖动被认为下线了，于是哨兵集群选举了一个新节点 B 作为主节点。一段时间以后节点 A 复活了，集群会把 A 降级为从节点。既然是从节点，就需要与主节点 B 同步数据。由于 A 作为从节点，B 作为主节点，他们是第一次同步数据，所以 A 会清空自己的数据，将 B 的 RDB 完全读入。但是由于 B 是被选出来的新主节点，他里面的数据和之前的 A 并不是完全相同（他们之间的同步不是强一致性，是最终一致性），所以在 A 作为主节点的时候，有些数据 A 里面有，B 里面没有。那么 A 作为从节点的时候，清空了自己的数据，那么就可能会造成数据丢失。&lt;/p>
+&lt;p>在 Redis 中有两个配置的属性：&lt;/p>
 &lt;ol>
-&lt;li>min-slaves-to-write x，主节点必须要有至少x个从节点连接，如果小于这个数，主节点会禁止写数据。&lt;/li>
-&lt;li>min-slaves-max-lag x，主从数据复制和同步的延迟不能超过x秒，如果超过，主节点会禁止写数据。&lt;/li>
+&lt;li>min-slaves-to-write x，主节点必须要有至少 x 个从节点连接，如果小于这个数，主节点会禁止写数据。&lt;/li>
+&lt;li>min-slaves-max-lag x，主从数据复制和同步的延迟不能超过 x 秒，如果超过，主节点会禁止写数据。&lt;/li>
 &lt;/ol>
-&lt;p>实际上这种配置本质上是限制了节点A的读写，只允许了新主库B的读写，从时间角度上减少了脑裂的可能性。&lt;/p>
+&lt;p>实际上这种配置本质上是限制了节点 A 的读写，只允许了新主库 B 的读写，从时间角度上减少了脑裂的可能性。&lt;/p>
 &lt;h3 id="切片集群">切片集群&lt;/h3>
 &lt;p>切片集群类似于 MySQL 的分库分表，将数据切分到多个 Redis 实例中，从而实现数据横向扩展。官方提供了一个 Redis Cluster 方案，用来实现切片集群。&lt;/p>
 &lt;p>Redis Cluster 方案采用 Hash Slot 来处理数据和实例之间的映射关系，一个切片集群由 16384 个哈希槽。首先根据键值对的 key 根据 CRC16 算法计算一个 16bit 的值，然后用这个 16 位的值对 16384 取模，得到映射对应的哈希槽位。Redis Cluster 会把这一万多个哈希槽均匀地分布到多个节点上，每个节点负责一部分哈希槽。&lt;/p>
@@ -96,7 +96,7 @@
 &lt;li>&lt;a href="https://time.geekbang.org/column/article/272852">06 | 数据同步：主从库如何实现数据一致？&lt;/a>&lt;/li>
 &lt;li>&lt;a href="https://time.geekbang.org/column/article/274483">07 | 哨兵机制：主库挂了，如何不间断服务？&lt;/a>&lt;/li>
 &lt;li>&lt;a href="https://freegeektime.com/100056701/275337/">08 | 哨兵集群：哨兵挂了，主从库还能切换吗？&lt;/a>&lt;/li>
-&lt;li>&lt;a href="https://xiaolincoding.com/redis/base/redis_interview.html#%E9%9B%86%E7%BE%A4%E8%84%91%E8%A3%82%E5%AF%BC%E8%87%B4%E6%95%B0%E6%8D%AE%E4%B8%A2%E5%A4%B1%E6%80%8E%E4%B9%88%E5%8A%9E">小林coding | Redis常见面试题&lt;/a>&lt;/li>
+&lt;li>&lt;a href="https://xiaolincoding.com/redis/base/redis_interview.html#%E9%9B%86%E7%BE%A4%E8%84%91%E8%A3%82%E5%AF%BC%E8%87%B4%E6%95%B0%E6%8D%AE%E4%B8%A2%E5%A4%B1%E6%80%8E%E4%B9%88%E5%8A%9E">小林 coding | Redis 常见面试题&lt;/a>&lt;/li>
 &lt;/ul></description></item><item><title>深入理解分布式锁的原理和技术选型</title><link>https://vinci-217.github.io/blog/lock/</link><pubDate>Wed, 22 Jan 2025 10:28:35 +0800</pubDate><guid>https://vinci-217.github.io/blog/lock/</guid><description>&lt;p>分布式锁是一种常用的技术，在分布式环境下，为了避免多个进程或线程同时操作同一资源造成冲突，引入分布式锁机制。本文将介绍分布式锁的原理和使用场景，并通过 Redis、Zookeeper、Redisson 等中间件来实现分布式锁。&lt;/p>
 &lt;h2 id="分布式锁的主要特性">分布式锁的主要特性&lt;/h2>
 &lt;ul>
