@@ -448,11 +448,11 @@
 &lt;/ol>
 &lt;p>&lt;strong>缺点：&lt;/strong>&lt;/p>
 &lt;ol>
-&lt;li>依赖于Redis：如果Redis宕机或者不可用，那么Redisson的锁也会失效。&lt;/li>
-&lt;li>性能问题：RedLock算法的执行过程中，也可能会面临一些加锁解锁的性能成本，以及系统时钟比对的问题&lt;/li>
+&lt;li>依赖于 Redis：如果 Redis 宕机或者不可用，那么 Redisson 的锁也会失效。&lt;/li>
+&lt;li>性能问题：RedLock 算法的执行过程中，也可能会面临一些加锁解锁的性能成本，以及系统时钟比对的问题&lt;/li>
 &lt;/ol>
 &lt;h2 id="总结">总结&lt;/h2>
-&lt;p>实际生产环境中，我们一般推荐ZK或者Redis分布式锁。相比之下，ZK的锁的可靠性更高，Redis的锁的性能更好。具体使用那种还是取决于自己的业务需要。&lt;/p>
+&lt;p>实际生产环境中，我们一般推荐 ZK 或者 Redis 分布式锁。相比之下，ZK 的锁的可靠性更高，Redis 的锁的性能更好。具体使用那种还是取决于自己的业务需要。&lt;/p>
 &lt;h2 id="参考文献">参考文献&lt;/h2>
 &lt;ul>
 &lt;li>&lt;a href="https://blog.csdn.net/u013474436/article/details/104924782">基于 MySQL 实现的分布式锁&lt;/a>&lt;/li>
