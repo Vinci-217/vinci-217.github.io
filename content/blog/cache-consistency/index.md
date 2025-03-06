@@ -1,6 +1,6 @@
 ---
-title: 博客标题
-date: 缓存和数据库一致性解决策略
+title: 缓存和数据库一致性解决策略
+date: 2025-03-06T17:07:00+08:00
 tags: ["Redis"]
 series: []
 featured: false
