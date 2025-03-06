@@ -1,4 +1,14 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Airplane</title><link>https://vinci-217.github.io/</link><description>Recent content on Airplane created by</description><generator>Hugo -- gohugo.io</generator><language>zn-ch</language><lastBuildDate>Mon, 10 Feb 2025 15:15:29 +0800</lastBuildDate><atom:link href="https://vinci-217.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>深入探究主流消息队列技术选型与实践</title><link>https://vinci-217.github.io/blog/mq/</link><pubDate>Mon, 10 Feb 2025 15:15:29 +0800</pubDate><guid>https://vinci-217.github.io/blog/mq/</guid><description>&lt;p>消息队列是开发实践中较为进阶的一种中间件，消息队列的用途广泛，尤其是后端有多个服务的情况下。本文将主要探究主流的几种消息队列技术，深入分析其架构原理，以及在实际项目中如何选用&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Airplane</title><link>https://vinci-217.github.io/</link><description>Recent content on Airplane created by</description><generator>Hugo -- gohugo.io</generator><language>zn-ch</language><lastBuildDate>Thu, 06 Mar 2025 17:07:00 +0800</lastBuildDate><atom:link href="https://vinci-217.github.io/index.xml" rel="self" type="application/rss+xml"/><item><title>缓存和数据库一致性解决策略</title><link>https://vinci-217.github.io/blog/cache-consistency/</link><pubDate>Thu, 06 Mar 2025 17:07:00 +0800</pubDate><guid>https://vinci-217.github.io/blog/cache-consistency/</guid><description>&lt;p>为了能让用户获取到数据更快，我们采用缓存的策略。但是在更新操作时，我们需要保证缓存和数据库的数据一致性。本文介绍几种常用的缓存和数据库一致性解决策略。&lt;/p>
+&lt;h2 id="cache-aside">Cache Aside&lt;/h2>
+&lt;p>Cache Asside即旁路缓存，是保证缓存和数据库一致性常用的一种策略。当面临数据更新时，先更新数据库，然后删除缓存。&lt;/p>
+&lt;p>这种模型会出现一种小的错误，导致读取的数据和实际的数据不一致（如图）。其主要原因是更新数据库的数据以后，还没来得及删除缓存，读取请求就打到了缓存中。不过这种可能性比较小，并且毕竟是读取请求，可以容忍一定时间的数据不一致问题。&lt;/p>
+&lt;p>&lt;img src="image/image.png" alt="图片来自马丁">&lt;/p>
+&lt;p>还有一种相对影响较大的问题，就是可能会出现查询数据不存在，并且放入缓存的请求在更新缓存之后，就导致了缓存了错误的数据的情况。&lt;/p>
+&lt;p>&lt;img src="image/image-1.png" alt="图片来自马丁">&lt;/p>
+&lt;p>不过这种情况的可能性也及其小，实际业务中可以容忍。&lt;/p>
+&lt;h2 id="消息队列最终一致性">消息队列最终一致性&lt;/h2>
+&lt;p>&lt;img src="image/image-2.png" alt="图片来自马丁">&lt;/p>
+&lt;p>这种方法通过消息队列将更新数据库的操作和更新缓存的操作解耦：当更新完数据库时，先将消息放入消息队列，然后消费者消费消息，更新缓存。这种方式可以保证缓存和数据库的数据一致性，但是会引入一定的延迟。&lt;/p></description></item><item><title>深入探究主流消息队列技术选型与实践</title><link>https://vinci-217.github.io/blog/mq/</link><pubDate>Mon, 10 Feb 2025 15:15:29 +0800</pubDate><guid>https://vinci-217.github.io/blog/mq/</guid><description>&lt;p>消息队列是开发实践中较为进阶的一种中间件，消息队列的用途广泛，尤其是后端有多个服务的情况下。本文将主要探究主流的几种消息队列技术，深入分析其架构原理，以及在实际项目中如何选用&lt;/p>
 &lt;p>这是内容&lt;/p></description></item><item><title>一文归纳数据库集群技术要点</title><link>https://vinci-217.github.io/blog/database-cluster/</link><pubDate>Fri, 07 Feb 2025 19:52:18 +0800</pubDate><guid>https://vinci-217.github.io/blog/database-cluster/</guid><description>&lt;p>数据库是服务端开发离不开的中间件，为了提高大型项目中数据库的可用性，常常通过集群的方式部署数据库。本文将从数据库集群的技术要点出发，介绍基于 MySQL 和 Redis 的数据库集群方案。&lt;/p>
 &lt;h2 id="mysql">MySQL&lt;/h2>
 &lt;p>MySQL 最初是一种单机的数据库系统，他的集群出现主要是为了应对高并发读写和数据库宕机的场景。针对这样的场景，MySQL 采用了多个服务集群部署、读写分离等策略来应对。MySQL 集群的方式有很多种，目的都是为了提高其可用性。&lt;/p>
@@ -87,7 +97,7 @@
 &lt;h3 id="切片集群">切片集群&lt;/h3>
 &lt;p>切片集群类似于 MySQL 的分库分表，将数据切分到多个 Redis 实例中，从而实现数据横向扩展。官方提供了一个 Redis Cluster 方案，用来实现切片集群。&lt;/p>
 &lt;p>Redis Cluster 方案采用 Hash Slot 来处理数据和实例之间的映射关系，一个切片集群由 16384 个哈希槽。首先根据键值对的 key 根据 CRC16 算法计算一个 16bit 的值，然后用这个 16 位的值对 16384 取模，得到映射对应的哈希槽位。Redis Cluster 会把这一万多个哈希槽均匀地分布到多个节点上，每个节点负责一部分哈希槽。&lt;/p>
-&lt;p>在客户端访问时，会根据算法算出 key 对应的哈希槽位，然后直接访问对应的节点，就好像这个分片的操作对于客户端来说是完全无感的&lt;/p>
+&lt;p>实际上刚建立集群的时候，每个Redis实例并不知道别的实例分配了哪些槽位。他们之间会进行扩散转发哈希槽信息，等都建立链接以后，就有了对应的关系了。客户端会把哈希槽信息缓存到本地，在客户端访问时，会根据算法算出 key 对应的哈希槽位，然后直接访问对应的节点，就好像这个分片的操作对于客户端来说是完全无感的&lt;/p>
 &lt;h2 id="参考文献">参考文献&lt;/h2>
 &lt;ul>
 &lt;li>&lt;a href="https://www.cnblogs.com/lgx211/p/12456859.html">多图文，详细介绍 mysql 各个集群方案&lt;/a>&lt;/li>
